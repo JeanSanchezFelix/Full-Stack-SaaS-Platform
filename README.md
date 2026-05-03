@@ -6,7 +6,7 @@ Each SaaS product lives inside the same ecosystem, sharing core infrastructure w
 
 
 ## Base Project Structure 
-```text
+```bash
 Full-Stack-SaaS-Platform/
 |-- Controllers/          # MVC controllers
 |-- Views/                # Razor views
@@ -50,7 +50,7 @@ dotnet restore
 # Install frontend dependencies
 npm.cmd install
 
-# Build frontend assets (Svelte + Tailwind)
+# Build frontend assets
 npm.cmd run build
 
 # Run the backend server
