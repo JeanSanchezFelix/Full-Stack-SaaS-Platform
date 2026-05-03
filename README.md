@@ -1,32 +1,11 @@
-# SvelteHybridMVC
+# Full-Stack SaaS Platform (_Scooter de la Bahía_)
 
-A hybrid app that combines the structure of **ASP.NET MVC** with the interactivity of **Svelte**. MVC owns the main routing and Razor views, while Svelte powers focused interactive components.
+This repository is a **monorepo for multiple SaaS applications**, built using a hybrid architecture that combines **ASP.NET Core (MVC + APIs)** with **Svelte frontend apps**.
 
-## Features
+Each SaaS product lives inside the same ecosystem, sharing core infrastructure while remaining independently deployable.
 
-- **MVC first**: Razor views control page rendering, with Svelte components added where interactivity is useful.
-- **Server-side rendering ready**: Includes an SSR endpoint and selective hydration settings.
-- **Tailwind styling**: Tailwind CSS utilities drive the UI instead of Bootstrap-style local classes.
-- **Svelte component build**: Vite bundles the Svelte client into `wwwroot/_svelte`.
 
-## Run
-
-```bash
-# Restore packages
-dotnet restore
-npm.cmd install
-
-# Build Tailwind and Svelte assets
-npm.cmd run build
-
-# Start the MVC app
-dotnet run
-```
-
-Then open http://localhost:5000.
-
-## Project Structure
-
+## Base Project Structure 
 ```text
 Full-Stack-SaaS-Platform/
 |-- Controllers/          # MVC controllers
@@ -41,10 +20,48 @@ Full-Stack-SaaS-Platform/
 `-- Infrastructure/       # Dependency injection extensions
 ```
 
-## Technologies
 
-- ASP.NET Core 10
-- Svelte 5
-- Vite
-- Tailwind CSS
-- Razor runtime compilation
+## Architecture Overview
+
+* **ASP.NET Core (Backend layer)** handles routing, authentication, APIs, and business logic, serves Razor MVC pages where needed, and acts as the central backend for all SaaS applications.
+
+* **Svelte (Frontend layer)** is used for highly interactive UI components, built with Vite and compiled into `wwwroot`, embedded inside Razor/MVC views or used as standalone frontends, and enables modern, reactive user experiences.
+
+* **Monorepo structure** contains multiple SaaS products in a single repository, shares core infrastructure and services across all applications, keeps each product modular and independently maintainable, and allows common utilities and logic to be reused across apps.
+
+* **Hybrid MVC + SPA approach** uses Razor views to handle base routing and server-rendered pages while Svelte powers dynamic and interactive UI sections, balancing server-side rendering with modern frontend interactivity.
+
+* **API-first backend design** ensures a clear separation between frontend and business logic, with all SaaS modules communicating through consistent APIs, enabling future expansion into mobile apps and external client integrations.
+
+* **Modern UI system** uses Tailwind CSS for utility-first styling and a component-driven frontend architecture built with Svelte.
+
+* **Flexible deployment strategy** allows each SaaS module to scale independently while shared backend services reduce duplication and improve overall system efficiency.
+
+
+## Run the Project
+```bash
+# Restore backend dependencies
+dotnet restore
+
+# Install frontend dependencies
+npm.cmd install
+
+# Build frontend assets
+npm.cmd run build
+
+# Run the backend server
+dotnet run
+```
+
+Then open:
+```
+http://localhost:5000
+```
+
+## Technologies
+* ASP.NET Core 10
+* MVC + Razor Views
+* Svelte 5
+* Vite
+* Tailwind CSS
+* PostgreSQL
