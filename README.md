@@ -48,7 +48,3 @@ Full-Stack-SaaS-Platform/
 - Vite
 - Tailwind CSS
 - Razor runtime compilation
-
-## License
-
-MIT
