@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<section class="rounded-md bg-gradient-to-br from-indigo-500 to-violet-700 px-6 py-16 text-center text-white shadow-sm sm:px-10">
+    <h1 class="text-4xl font-bold leading-tight sm:text-5xl">Welcome to SvelteHybridMVC</h1>
+    <p class="mx-auto mt-4 max-w-2xl text-lg text-white/90">
+        A hybrid system that combines the structure of ASP.NET MVC with SvelteKit interactivity.
+    </p>
+
+    <div class="mt-10 grid gap-6 md:grid-cols-3">
+        <article class="rounded-md border border-white/20 bg-white/15 p-6 text-left shadow-sm backdrop-blur">
+            <h3 class="text-xl font-semibold text-white">MVC First</h3>
+            <p class="mt-3 text-sm leading-6 text-white/90">Razor views control the pages while Svelte components add focused interactivity.</p>
+        </article>
+        <article class="rounded-md border border-white/20 bg-white/15 p-6 text-left shadow-sm backdrop-blur">
+            <h3 class="text-xl font-semibold text-white">Fast SSR</h3>
+            <p class="mt-3 text-sm leading-6 text-white/90">Server-side rendering with selective hydration for interactive areas.</p>
+        </article>
+        <article class="rounded-md border border-white/20 bg-white/15 p-6 text-left shadow-sm backdrop-blur">
+            <h3 class="text-xl font-semibold text-white">Live Updates</h3>
+            <p class="mt-3 text-sm leading-6 text-white/90">Hot reload support for both C# and Svelte during development.</p>
+        </article>
+    </div>
+
+    <a asp-controller="Products" asp-action="Index" class="mt-10 inline-flex items-center rounded-md bg-white px-6 py-3 font-semibold text-indigo-600 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600">
+        Browse Products
+    </a>
+</section>

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/sveltekit",
+  "kit": {
+    "adapter": "node",
+    "output": "../wwwroot/_svelte"
+  },
+  "integrations": {
+    "aspnet": {
+      "mode": "hybrid",
+      "dominantFramework": "mvc",
+      "ssrEndpoint": "/_svelte/ssr"
+    }
+  }
+}
