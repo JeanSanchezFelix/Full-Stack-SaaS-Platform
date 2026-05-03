@@ -18,6 +18,11 @@ Thumbs.db
 # Logs
 *.log
 
+# Local secrets
+appsettings.Development.json
+.env
+schema
+
 # Frontend build output
 wwwroot/_svelte/
 wwwroot/css/site.css

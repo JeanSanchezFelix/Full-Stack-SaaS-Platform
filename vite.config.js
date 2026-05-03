@@ -8,8 +8,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        client: 'SvelteApp/src/client.js',
-        ProductGrid: 'SvelteApp/src/ProductGrid.js'
+        client: 'SvelteApp/src/client.js'
       },
       output: {
         entryFileNames: '[name].js',

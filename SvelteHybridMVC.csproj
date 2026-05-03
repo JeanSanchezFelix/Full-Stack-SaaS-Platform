@@ -8,12 +8,15 @@
     <SvelteOutputPath>wwwroot/_svelte</SvelteOutputPath>
     <SvelteBuildMode>Parallel</SvelteBuildMode>
     <PreserveCompilationContext>true</PreserveCompilationContext>
+    <UserSecretsId>87e5ed73-a40b-4383-9ec4-0aa28b10b959</UserSecretsId>
   </PropertyGroup>
 
   <!-- Core system packages -->
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.0" />
     <PackageReference Include="JavaScriptEngineSwitcher.Jint" Version="3.25.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
   </ItemGroup>
 
   <!-- Hybrid Svelte files -->

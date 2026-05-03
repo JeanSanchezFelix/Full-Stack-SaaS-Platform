@@ -1,8 +1,4 @@
-import { mount as mountProductGrid } from './ProductGrid.js';
-
-const componentMounts = {
-  ProductGrid: mountProductGrid
-};
+const componentMounts = {};
 
 function parseProps(element) {
   try {
