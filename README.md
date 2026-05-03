@@ -6,7 +6,7 @@ Each SaaS product lives inside the same ecosystem, sharing core infrastructure w
 
 
 ## Base Project Structure 
-```bash
+```text
 Full-Stack-SaaS-Platform/
 |-- Controllers/          # MVC controllers
 |-- Views/                # Razor views
