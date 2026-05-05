@@ -4,6 +4,8 @@ namespace SvelteHybridMVC.Models;
 
 public class CustomerIntakeViewModel
 {
+    public string? ReturnUrl { get; set; }
+
     [Required]
     [Display(Name = "Nombre")]
     public string FirstName { get; set; } = string.Empty;

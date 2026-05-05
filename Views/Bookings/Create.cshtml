@@ -1,0 +1,90 @@
+@model BookingCreateViewModel
+
+@{
+    ViewData["Title"] = "Reservar";
+}
+
+<section class="mx-auto max-w-4xl">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold tracking-normal text-slate-950">Reserva tu scooter</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Si ya nos visitaste, usa tu licencia para encontrar tu cuenta. Si es tu primera visita, ve al registro primero.
+        </p>
+    </div>
+
+    @if (TempData["BookingCreated"] is string message)
+    {
+        <div class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            @message
+        </div>
+    }
+
+    <div data-svelte-component="BookingLookupEnhancer" data-props='{"formId":"booking-form","lookupUrl":"@Url.Action("Lookup", "Bookings")"}'></div>
+
+    <form id="booking-form" asp-action="Create" method="post" class="space-y-8">
+        <div asp-validation-summary="ModelOnly" class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+
+        <fieldset class="rounded-md border border-slate-200 p-4">
+            <legend class="px-2 text-sm font-semibold text-slate-900">Es tu primera visita?</legend>
+            <div class="mt-2 flex flex-wrap gap-4 text-sm text-slate-700">
+                <label class="flex items-center gap-2">
+                    <input asp-for="IsFirstTime" type="radio" value="false" checked class="h-4 w-4 border-slate-300 text-slate-950 focus:ring-slate-900" />
+                    No, ya tengo cuenta
+                </label>
+                <label class="flex items-center gap-2">
+                    <input asp-for="IsFirstTime" type="radio" value="true" class="h-4 w-4 border-slate-300 text-slate-950 focus:ring-slate-900" />
+                    Si, es mi primera vez
+                </label>
+            </div>
+        </fieldset>
+
+        <div data-returning-fields class="grid gap-5 md:grid-cols-2">
+            <div>
+                <label asp-for="LicenseNumber" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="LicenseNumber" autocomplete="off" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="LicenseNumber" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+
+            <div>
+                <label asp-for="ElectronicSignature" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="ElectronicSignature" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+        </div>
+
+        <div data-booking-fields class="grid gap-5 border-t border-slate-200 pt-6 md:grid-cols-4">
+            <div>
+                <label asp-for="RequestedStart" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="RequestedStart" type="datetime-local" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="RequestedStart" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+
+            <div>
+                <label asp-for="RequestedEnd" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="RequestedEnd" type="datetime-local" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="RequestedEnd" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+
+            <div>
+                <label asp-for="ScooterQuantity" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="ScooterQuantity" min="1" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="ScooterQuantity" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+
+            <div>
+                <label asp-for="EbikeQuantity" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="EbikeQuantity" min="0" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="EbikeQuantity" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
+            <button type="submit" data-submit-label class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
+                Solicitar reserva
+            </button>
+            <a asp-controller="Home" asp-action="Index" class="rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</section>

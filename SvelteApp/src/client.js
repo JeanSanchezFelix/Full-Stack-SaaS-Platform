@@ -1,7 +1,9 @@
 import { mountCustomerIntakeEnhancer } from './CustomerIntakeEnhancer.js';
+import { mountBookingLookupEnhancer } from './BookingLookupEnhancer.js';
 
 const componentMounts = {
-  CustomerIntakeEnhancer: mountCustomerIntakeEnhancer
+  CustomerIntakeEnhancer: mountCustomerIntakeEnhancer,
+  BookingLookupEnhancer: mountBookingLookupEnhancer
 };
 
 function parseProps(element) {

@@ -49,11 +49,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(booking => booking.CustomerId).HasColumnName("customer_id");
             entity.Property(booking => booking.RequestedStart).HasColumnName("requested_start");
             entity.Property(booking => booking.RequestedEnd).HasColumnName("requested_end");
-            entity.Property(booking => booking.Quantity).HasColumnName("quantity");
+            entity.Property(booking => booking.ScooterQuantity).HasColumnName("scooter_quantity");
+            entity.Property(booking => booking.EbikeQuantity).HasColumnName("ebike_quantity");
             entity.Property(booking => booking.Status).HasColumnName("status");
             entity.Property(booking => booking.AdminNotes).HasColumnName("admin_notes");
             entity.Property(booking => booking.ApprovedBy).HasColumnName("approved_by");
             entity.Property(booking => booking.ApprovedAt).HasColumnName("approved_at");
+            entity.Property(booking => booking.EstimatedTotal).HasColumnName("estimated_total").HasPrecision(10, 2);
             entity.Property(booking => booking.CreatedAt).HasColumnName("created_at");
             entity.Property(booking => booking.UpdatedAt).HasColumnName("updated_at");
 
@@ -73,7 +75,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(rental => rental.CustomerId).HasColumnName("customer_id");
             entity.Property(rental => rental.StartTime).HasColumnName("start_time");
             entity.Property(rental => rental.EndTime).HasColumnName("end_time");
-            entity.Property(rental => rental.Quantity).HasColumnName("quantity");
+            entity.Property(rental => rental.ScooterQuantity).HasColumnName("scooter_quantity");
+            entity.Property(rental => rental.EbikeQuantity).HasColumnName("ebike_quantity");
             entity.Property(rental => rental.TotalPrice).HasColumnName("total_price").HasPrecision(10, 2);
             entity.Property(rental => rental.CreatedAt).HasColumnName("created_at");
 

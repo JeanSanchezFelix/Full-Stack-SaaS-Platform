@@ -8,11 +8,13 @@ namespace SvelteHybridMVC.Controllers;
 public class CustomersController(AppDbContext dbContext) : Controller
 {
     [HttpGet]
-    public IActionResult Create()
+    public IActionResult Create(string? returnUrl = null, string? licenseNumber = null)
     {
         return View(new CustomerIntakeViewModel
         {
-            Country = "Puerto Rico"
+            Country = "Puerto Rico",
+            LicenseNumber = licenseNumber,
+            ReturnUrl = returnUrl
         });
     }
 
@@ -58,6 +60,12 @@ public class CustomersController(AppDbContext dbContext) : Controller
         await dbContext.SaveChangesAsync();
 
         TempData["CustomerCreated"] = $"{customer.FirstName} {customer.LastName} was saved with customer code {customer.CustomerCode}.";
+
+        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+        {
+            return Redirect($"{model.ReturnUrl}?licenseNumber={Uri.EscapeDataString(customer.LicenseNumber ?? string.Empty)}");
+        }
+
         return RedirectToAction(nameof(Create));
     }
 

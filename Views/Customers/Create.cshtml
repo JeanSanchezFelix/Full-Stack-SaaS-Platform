@@ -17,6 +17,7 @@
     <div data-svelte-component="CustomerIntakeEnhancer" data-props='{"formId":"customer-intake-form"}'></div>
 
     <form id="customer-intake-form" asp-action="Create" method="post" class="space-y-8">
+        <input asp-for="ReturnUrl" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
         <div class="grid gap-5 md:grid-cols-2">
             <div>

@@ -6,11 +6,13 @@ public class Booking
     public long CustomerId { get; set; }
     public DateTime RequestedStart { get; set; }
     public DateTime? RequestedEnd { get; set; }
-    public int Quantity { get; set; }
+    public int ScooterQuantity { get; set; }
+    public int EbikeQuantity { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? AdminNotes { get; set; }
     public string? ApprovedBy { get; set; }
     public DateTime? ApprovedAt { get; set; }
+    public decimal? EstimatedTotal { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
