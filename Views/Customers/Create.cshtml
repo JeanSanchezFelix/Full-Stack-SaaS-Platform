@@ -1,0 +1,133 @@
+@model CustomerIntakeViewModel
+
+@{
+    ViewData["Title"] = "Registro";
+}
+<section class="mx-auto max-w-4xl">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold tracking-normal text-slate-950">Apunta tu información</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Llena el formulario para registrarte y poder alquilar nuestros scooters. Asegúrate de proporcionar información precisa para una experiencia sin problemas.</p>
+    </div>
+    @if (TempData["CustomerCreated"] is string message)
+    {
+        <div class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+        @message
+        </div>
+    }
+    <div data-svelte-component="CustomerIntakeEnhancer" data-props='{"formId":"customer-intake-form"}'></div>
+
+    <form id="customer-intake-form" asp-action="Create" method="post" class="space-y-8">
+        <div asp-validation-summary="ModelOnly" class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                <label asp-for="FirstName" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="FirstName" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="FirstName" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+            <div>
+                <label asp-for="LastName" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="LastName" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="LastName" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+            <div>
+                <label asp-for="LicenseNumber" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="LicenseNumber" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="LicenseNumber" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+            <div>
+                <label asp-for="PhoneNumber" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="PhoneNumber" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="PhoneNumber" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+            <div>
+                <label asp-for="Email" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="Email" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="Email" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+            <div>
+                <label asp-for="City" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="City" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="City" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+            <div>
+                <label asp-for="Country" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="Country" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="Country" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+            <div data-signature-field>
+                <label asp-for="ElectronicSignature" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="ElectronicSignature" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+        </div>
+        <div class="space-y-4 border-t border-slate-200 pt-6">
+            <label class="flex items-start gap-3 text-sm text-slate-700">
+                <input asp-for="LiabilityWaiverSigned" class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
+                <span>
+                    He leído el
+                    <a asp-controller="Customers" asp-action="LiabilityWaiver" class="font-medium text-slate-950 underline hover:text-slate-700">
+                        relevo de responsabilidad
+                    </a>
+                </span>
+            </label>
+            <label class="flex items-start gap-3 text-sm text-slate-700">
+                <input asp-for="AuthorizeRecontact" class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
+                <span>Autorizo recibir comunicaciones promocionales relacionadas con Scooter de la Bahía vía correo electrónico o WhatsApp</span>
+            </label>
+        </div>
+        <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
+            <button type="submit" class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
+                Finalizar Registro
+            </button>
+            <a
+                asp-controller="Home"
+                asp-action="Index"
+                class="rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</section>
+<script>
+    // Save form data to localStorage before navigating away
+    const form = document.getElementById('customer-intake-form');
+    
+    // Restore form data on page load
+    window.addEventListener('load', () => {
+        const savedData = localStorage.getItem('customer-intake-form');
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                Object.keys(data).forEach(key => {
+                    const input = form.elements[key];
+                    if (input) {
+                        if (input.type === 'checkbox') {
+                            input.checked = data[key];
+                        } else {
+                            input.value = data[key];
+                        }
+                    }
+                });
+                localStorage.removeItem('customer-intake-form');
+            } catch (e) {
+                console.error('Failed to restore form data:', e);
+            }
+        }
+    });
+
+    // Save form data when clicking the waiver link
+    document.addEventListener('click', (e) => {
+        if (e.target.href && e.target.href.includes('LiabilityWaiver')) {
+            const formData = {};
+            Array.from(form.elements).forEach(input => {
+                if (input.name && (input.type !== 'hidden' || input.name.startsWith('__'))) {
+                    if (input.type === 'checkbox') {
+                        formData[input.name] = input.checked;
+                    } else {
+                        formData[input.name] = input.value;
+                    }
+                }
+            });
+            localStorage.setItem('customer-intake-form', JSON.stringify(formData));
+        }
+    });</script>

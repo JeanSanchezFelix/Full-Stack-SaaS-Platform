@@ -26,3 +26,5 @@ schema
 # Frontend build output
 wwwroot/_svelte/
 wwwroot/css/site.css
+
+.fake

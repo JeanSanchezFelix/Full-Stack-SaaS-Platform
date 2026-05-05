@@ -1,25 +1,47 @@
 # Full-Stack SaaS Platform (_Scooter de la Bahía_)
 
-This repository is a **monorepo for multiple SaaS applications**, built using a hybrid architecture that combines **ASP.NET Core (MVC + APIs)** with **Svelte frontend apps**.
+ASP.NET Core MVC application with Svelte/Vite frontend assets and PostgreSQL data access for the Scooter de la Bahía rental workflow.
 
-Each SaaS product lives inside the same ecosystem, sharing core infrastructure while remaining independently deployable.
+The app currently uses Razor views as the server-rendered shell, Svelte as the frontend asset pipeline, and Entity Framework Core mappings for an existing PostgreSQL database named `scooter_de_la_bahia`.
 
+## Project Structure
 
-## Base Project Structure 
 ```text
 Full-Stack-SaaS-Platform/
-|-- Controllers/          # MVC controllers
-|-- Views/                # Razor views
+|-- Controllers/
+|   `-- HomeController.cs
+|-- Core/
+|   `-- SvelteOptions.cs
+|-- Infrastructure/
+|   |-- Data/
+|   |   `-- AppDbContext.cs
+|   `-- Extensions/
+|       `-- SvelteServiceExtensions.cs
+|-- Models/
+|   |-- Booking.cs
+|   |-- Customer.cs
+|   |-- Rental.cs
+|   `-- Review.cs
+|-- schema/
+|   `-- client_info.sql
+|-- SvelteApp/
+|   `-- src/
+|       |-- client.js
+|       `-- styles/site.css
+|-- Views/
+|   |-- Home/Index.cshtml
 |   |-- Shared/_Layout.cshtml
-|   |-- Home/
-|   `-- Products/
-|-- SvelteApp/src/        # Svelte source files and Tailwind input CSS
-|-- wwwroot/css/          # Built Tailwind CSS
-|-- wwwroot/_svelte/      # Built Svelte assets
-|-- Core/                 # Hybrid system settings
-`-- Infrastructure/       # Dependency injection extensions
+|   |-- _ViewImports.cshtml
+|   `-- _ViewStart.cshtml
+|-- wwwroot/
+|   |-- _svelte/
+|   `-- css/
+|-- Program.cs
+|-- SvelteHybridMVC.csproj
+|-- package.json
+|-- vite.config.js
+`-- tailwind.config.js
 ```
-
 
 ## Architecture Overview
 
@@ -37,6 +59,21 @@ Full-Stack-SaaS-Platform/
 
 * **Flexible deployment strategy** allows each SaaS module to scale independently while shared backend services reduce duplication and improve overall system efficiency.
 
+## Database
+
+The database schema is expected to already exist in PostgreSQL. The `AppDbContext` class in `Infrastructure/Data/AppDbContext.cs` contains the Entity Framework Core mappings for the existing tables. The connection string should be configured in the `.env` file.
+
+Mapped tables:
+* `customer`
+* `booking`
+* `rental`
+* `review`
+
+Configure the connection string with `.env`:
+
+```env
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=scooter_de_la_bahia;Username=postgres;Password=your-password
+```
 
 ## Run the Project
 ```bash

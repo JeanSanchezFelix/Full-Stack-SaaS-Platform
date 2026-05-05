@@ -1,4 +1,8 @@
-const componentMounts = {};
+import { mountCustomerIntakeEnhancer } from './CustomerIntakeEnhancer.js';
+
+const componentMounts = {
+  CustomerIntakeEnhancer: mountCustomerIntakeEnhancer
+};
 
 function parseProps(element) {
   try {
