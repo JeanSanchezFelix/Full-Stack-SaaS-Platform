@@ -24,36 +24,44 @@
 <body class="min-h-screen bg-white text-slate-900 antialiased">
     <div class="flex min-h-screen flex-col">
         <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-zinc-200">
-            <nav class="mx-auto flex max-w-7xl items-center gap-6 px-6 py-4">
-                
-                <a asp-controller="Home" asp-action="Index" class="border-r border-zinc-300 pr-6 flex items-center">
-                    <img src="~/images/scooter-de-la-bahia-logo.png" alt="Scooter de la Bahia" width="100" height="55"
-                         decoding="async" style="height: 55px; width: auto;" />
+    
+            <div class="flex items-center justify-between w-full px-8 h-16">
+
+                <!-- Logo -->
+                <a asp-controller="Home" asp-action="Index" class="flex items-center ">
+                    <img src="~/images/scooter-de-la-bahia-logo.png"
+                         class="h-12 w-auto object-contain transition duration-300 hover:drop-shadow-md" />
                 </a>
 
+                <!-- Nav -->
+                <nav class="flex flex-1 justify-evenly items-center
+                    text-[13px] sm:text-sm md:text-base lg:text-lg xl:text-lg 2xl:text-xl
+                    tracking-wide">
 
-                <a asp-controller="Home" asp-action="Index"
-                       class="rounded-md px-3 py-2 font-bold transition-colors duration-200 hover:text-[#EB6A38] @isActive("Home", "Index")">
-                    Home
-                </a>
+                    <a asp-controller="Home" asp-action="Index"
+                           class="font-bold transition hover:text-[#EB6A38] @isActive("Home", "Index")">
+                        Home
+                    </a>
 
-                <a asp-controller="Customers" asp-action="Create"
-                       class="rounded-md px-3 py-2 font-bold transition-colors duration-200 hover:text-[#EB6A38] @isActive("Customers", "Create")">
-                    Regístrate
-                </a>
+                    <a asp-controller="Customers" asp-action="Create"
+                           class="font-bold transition hover:text-[#EB6A38] @isActive("Customers", "Create")">
+                        Regístrate
+                    </a>
 
-                <a asp-controller="Bookings" asp-action="Create"
-                       class="rounded-md px-3 py-2 font-bold transition-colors duration-200 hover:text-[#EB6A38] @(currentController == "Bookings" && currentAction == "Create" || currentController == "Accounts" && currentAction == "User" ? "text-[#EB6A38] font-bold" : "text-slate-900")">
-                    Reserva
-                </a>
+                    <a asp-controller="Bookings" asp-action="Create"
+                           class="font-bold transition hover:text-[#EB6A38] @(currentController == "Bookings" && currentAction == "Create" || currentController == "Accounts" && currentAction == "User" ? "text-[#EB6A38] font-bold" : "text-slate-900")">
+                        Reserva
+                    </a>
 
-                <a asp-controller="Accounts" asp-action="Admin"
-                       class="rounded-md px-3 py-2 font-bold transition-colors duration-200 hover:text-[#EB6A38] @isActive("Accounts", "Admin")">
-                    Admin
-                </a>
+                    <a asp-controller="Accounts" asp-action="Admin"
+                           class="font-bold transition hover:text-[#EB6A38] @isActive("Accounts", "Admin")">
+                        Admin
+                    </a>
 
+                </nav>
 
-            </nav>
+            </div>
+
         </header>
 
         <main class="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
@@ -216,7 +224,8 @@
                 <div
                     class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 text-sm text-black-500 md:flex-row">
                     <p>
-                        &copy; @DateTime.Now.Year <strong class="text-black-300">Scooter de la Bahía</strong> — Todos los derechos reservados
+                        &copy; @DateTime.Now.Year <strong class="text-black-300">Scooter de la Bahía</strong> — Todos
+                        los derechos reservados
                     </p>
                 </div>
             </div>
