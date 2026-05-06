@@ -28,6 +28,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(customer => customer.Email).HasColumnName("email");
             entity.Property(customer => customer.City).HasColumnName("city");
             entity.Property(customer => customer.Country).HasColumnName("country");
+            entity.Property(customer => customer.HowDidYouHear).HasColumnName("how_did_you_hear");
+            entity.Property(customer => customer.Observations).HasColumnName("observations");
             entity.Property(customer => customer.LiabilityWaiverSigned).HasColumnName("liability_waiver_signed");
             entity.Property(customer => customer.LiabilityWaiverSignedAt).HasColumnName("liability_waiver_signed_at");
             entity.Property(customer => customer.ElectronicSignature).HasColumnName("electronic_signature");
@@ -56,6 +58,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(booking => booking.ApprovedBy).HasColumnName("approved_by");
             entity.Property(booking => booking.ApprovedAt).HasColumnName("approved_at");
             entity.Property(booking => booking.EstimatedTotal).HasColumnName("estimated_total").HasPrecision(10, 2);
+            entity.Property(booking => booking.LiabilityWaiverSigned).HasColumnName("liability_waiver_signed");
+            entity.Property(booking => booking.LiabilityWaiverSignedAt).HasColumnName("liability_waiver_signed_at");
+            entity.Property(booking => booking.ElectronicSignature).HasColumnName("electronic_signature");
             entity.Property(booking => booking.CreatedAt).HasColumnName("created_at");
             entity.Property(booking => booking.UpdatedAt).HasColumnName("updated_at");
 

@@ -1,0 +1,223 @@
+@model AdminPanelViewModel
+
+@{
+    ViewData["Title"] = "Panel de Administración";
+}
+
+<section class="mx-auto max-w-6xl">
+    <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold tracking-normal text-slate-950">Panel de Administración</h1>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Aprueba reservas pendientes para crear la entrada en rental.</p>
+        </div>
+        <a asp-action="Create" class="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">Nueva reserva</a>
+    </div>
+
+    @if (TempData["BookingApproved"] is string message)
+    {
+        <div class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            @message
+        </div>
+    }
+    @if (TempData["BookingRejected"] is string rejectedMessage)
+    {
+        <div class="mb-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+            @rejectedMessage
+        </div>
+    }
+    @if (TempData["BookingRejectedError"] is string rejectedErrorMessage)
+    {
+        <div class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            @rejectedErrorMessage
+        </div>
+    }
+
+    <div class="mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
+        <a asp-action="Admin" asp-route-tab="bookings" class="rounded-md px-3 py-1.5 text-sm font-semibold @(Model.ActiveTab == "bookings" ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100")">
+            Reservas
+        </a>
+        <a asp-action="Admin" asp-route-tab="clients" class="rounded-md px-3 py-1.5 text-sm font-semibold @(Model.ActiveTab == "clients" ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100")">
+            Clientes
+        </a>
+    </div>
+
+    @if (Model.ActiveTab == "clients")
+    {
+        <div class="mb-4 flex justify-end">
+            <a asp-action="ExportCustomers" class="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">
+                Exportar clientes (CSV)
+            </a>
+        </div>
+        <div class="overflow-hidden rounded-md border border-slate-200 bg-white">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-left text-slate-600">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold">Codigo</th>
+                        <th class="px-4 py-3 font-semibold">Nombre</th>
+                        <th class="px-4 py-3 font-semibold">Licencia</th>
+                        <th class="px-4 py-3 font-semibold">Telefono</th>
+                        <th class="px-4 py-3 font-semibold">Email</th>
+                        <th class="px-4 py-3 font-semibold">Ciudad/Pais</th>
+                        <th class="px-4 py-3 font-semibold">Waiver</th>
+                        <th class="px-4 py-3 font-semibold">Firma</th>
+                        <th class="px-4 py-3 font-semibold">Como supo</th>
+                        <th class="px-4 py-3 font-semibold">Comentarios</th>
+                        <th class="px-4 py-3 font-semibold">Promo</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach (var customer in Model.Customers)
+                    {
+                        <tr>
+                            <td class="px-4 py-3 font-medium text-slate-900">@customer.CustomerCode</td>
+                            <td class="px-4 py-3 text-slate-600">@customer.FirstName @customer.LastName</td>
+                            <td class="px-4 py-3 text-slate-600">@customer.LicenseNumber</td>
+                            <td class="px-4 py-3 text-slate-600">@customer.PhoneNumber</td>
+                            <td class="px-4 py-3 text-slate-600">@customer.Email</td>
+                            <td class="px-4 py-3 text-slate-600">@customer.City, @customer.Country</td>
+                            <td class="px-4 py-3 text-slate-600">@(customer.LiabilityWaiverSigned ? "si" : "no")</td>
+                            <td class="px-4 py-3 text-slate-600">@customer.ElectronicSignature</td>
+                            <td class="px-4 py-3 text-slate-600">@customer.HowDidYouHear</td>
+                            <td class="px-4 py-3 text-slate-600">@customer.Observations</td>
+                            <td class="px-4 py-3 text-slate-600">@(customer.AuthorizeRecontact ? "si" : "no")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="overflow-hidden rounded-md border border-slate-200 bg-white">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-left text-slate-600">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold">Cliente</th>
+                        <th class="px-4 py-3 font-semibold">Licencia</th>
+                        <th class="px-4 py-3 font-semibold">Fecha</th>
+                        <th class="px-4 py-3 font-semibold">Inicio</th>
+                        <th class="px-4 py-3 font-semibold">Fin</th>
+                        <th class="px-4 py-3 font-semibold">Duracion</th>
+                        <th class="px-4 py-3 font-semibold">Scooters</th>
+                        <th class="px-4 py-3 font-semibold">E-bikes</th>
+                        <th class="px-4 py-3 font-semibold">Estado</th>
+                        <th class="px-4 py-3 font-semibold">Nota admin</th>
+                        <th class="px-4 py-3 font-semibold"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach (var booking in Model.Bookings)
+                    {
+                        <tr>
+                            <td class="px-4 py-3 font-medium text-slate-900">@booking.CustomerName</td>
+                            <td class="px-4 py-3 text-slate-600">@booking.LicenseNumber</td>
+                            <td class="px-4 py-3 text-slate-600">@booking.RequestedStart.ToString("d")</td>
+                            <td class="px-4 py-3 text-slate-600">@booking.RequestedStart.ToString("HH:mm")</td>
+                            <td class="px-4 py-3 text-slate-600">@(booking.RequestedEnd?.ToString("HH:mm") ?? "-")</td>
+                            <td class="px-4 py-3 text-slate-600">@(booking.RequestedEnd.HasValue ? Math.Round((booking.RequestedEnd.Value - booking.RequestedStart).TotalHours) : 0)h</td>
+                            <td class="px-4 py-3 text-slate-600">@booking.ScooterQuantity</td>
+                            <td class="px-4 py-3 text-slate-600">@booking.EbikeQuantity</td>
+                            <td class="px-4 py-3 text-slate-600">@booking.Status</td>
+                            <td class="px-4 py-3 text-slate-600">@booking.AdminNotes</td>
+                            <td class="px-4 py-3 text-right">
+                                @if (booking.Status == "pending")
+                                {
+                                    <div class="flex items-center justify-end gap-2">
+                                        <form asp-controller="Bookings" asp-action="Approve" asp-route-id="@booking.Id" method="post">
+                                            <button type="submit" class="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
+                                                Aprobar
+                                            </button>
+                                        </form>
+                                        <button type="button"
+                                                class="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+                                                onclick="openBookingModal('@booking.Id', 'reject')">
+                                            Rechazar
+                                        </button>
+                                    </div>
+                                }
+                                else if (booking.Status == "rejected")
+                                {
+                                    <button type="button"
+                                            class="rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600"
+                                            onclick="openBookingModal('@booking.Id', 'reapprove')">
+                                        Re-aprobar
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div id="booking-action-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-md rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 id="booking-action-title" class="text-base font-semibold text-slate-900"></h3>
+            <p id="booking-action-description" class="mt-2 text-sm text-slate-600"></p>
+            <form id="booking-action-form" method="post" class="mt-4 space-y-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="booking-action-id" name="id" />
+                <textarea id="booking-action-note" name="adminNotes" required
+                          class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                          placeholder="Explica al cliente el motivo de su rechazo"></textarea>
+                <div class="flex justify-end gap-2">
+                    <button type="button" class="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100" onclick="closeBookingModal()">
+                        Cancelar
+                    </button>
+                    <button id="booking-action-confirm" type="submit" class="rounded-md px-3 py-1.5 text-sm font-semibold text-white"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const modal = document.getElementById('booking-action-modal');
+            const form = document.getElementById('booking-action-form');
+            const idInput = document.getElementById('booking-action-id');
+            const noteInput = document.getElementById('booking-action-note');
+            const title = document.getElementById('booking-action-title');
+            const description = document.getElementById('booking-action-description');
+            const confirmButton = document.getElementById('booking-action-confirm');
+
+            window.openBookingModal = (bookingId, mode) => {
+                if (!modal || !form || !idInput || !noteInput || !title || !description || !confirmButton) {
+                    return;
+                }
+
+                idInput.value = bookingId;
+                noteInput.value = '';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+                if (mode === 'reapprove') {
+                    form.action = '/Bookings/Reapprove';
+                    title.textContent = 'Re-aprobar reserva';
+                    description.textContent = 'Explica al cliente por que el horario vuelve a estar disponible para confirmar.';
+                    noteInput.placeholder = 'Explica al cliente por que este horario vuelve a estar disponible.';
+                    confirmButton.textContent = 'Confirmar re-aprobacion';
+                    confirmButton.className = 'rounded-md bg-amber-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-600';
+                } else {
+                    form.action = '/Bookings/Reject';
+                    title.textContent = 'Rechazar reserva';
+                    description.textContent = 'Explica al cliente el motivo de su rechazo.';
+                    noteInput.placeholder = 'Explica al cliente el motivo de su rechazo.';
+                    confirmButton.textContent = 'Confirmar rechazo';
+                    confirmButton.className = 'rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700';
+                }
+            };
+
+            window.closeBookingModal = () => {
+                if (!modal) {
+                    return;
+                }
+
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            };
+        })();
+    </script>
+}

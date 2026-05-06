@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="es" dir="ltr">
 
 <head>
     <meta charset="utf-8" />
@@ -43,14 +43,15 @@
                 </a>
 
                 <a asp-controller="Bookings" asp-action="Create"
-                       class="rounded-md px-3 py-2 font-bold transition-colors duration-200 hover:text-[#EB6A38] @isActive("Bookings", "Create")">
+                       class="rounded-md px-3 py-2 font-bold transition-colors duration-200 hover:text-[#EB6A38] @(currentController == "Bookings" && currentAction == "Create" || currentController == "Accounts" && currentAction == "User" ? "text-[#EB6A38] font-bold" : "text-slate-900")">
                     Reserva
                 </a>
 
-                <a asp-controller="Bookings" asp-action="Pending"
-                       class="rounded-md px-3 py-2 font-bold transition-colors duration-200 hover:text-[#EB6A38] @isActive("Bookings", "Pending")">
+                <a asp-controller="Accounts" asp-action="Admin"
+                       class="rounded-md px-3 py-2 font-bold transition-colors duration-200 hover:text-[#EB6A38] @isActive("Accounts", "Admin")">
                     Admin
                 </a>
+
 
             </nav>
         </header>
@@ -215,8 +216,7 @@
                 <div
                     class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 text-sm text-black-500 md:flex-row">
                     <p>
-                        &copy; @DateTime.Now.Year <strong class="text-black-300">Scooter de la Bahía</strong> — Todo
-                        derechos reservados
+                        &copy; @DateTime.Now.Year <strong class="text-black-300">Scooter de la Bahía</strong> — Todos los derechos reservados
                     </p>
                 </div>
             </div>

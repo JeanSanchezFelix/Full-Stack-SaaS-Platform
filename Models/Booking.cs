@@ -13,6 +13,9 @@ public class Booking
     public string? ApprovedBy { get; set; }
     public DateTime? ApprovedAt { get; set; }
     public decimal? EstimatedTotal { get; set; }
+    public bool LiabilityWaiverSigned { get; set; }
+    public DateTime? LiabilityWaiverSignedAt { get; set; }
+    public string? ElectronicSignature { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

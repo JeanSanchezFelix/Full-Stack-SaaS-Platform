@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Registro";
+    var waiverReturnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var draftErrors = ViewData["DraftErrors"] as List<string> ?? new List<string>();
 }
 <section class="mx-auto max-w-4xl">
     <div class="mb-8">
@@ -19,6 +21,17 @@
     <form id="customer-intake-form" asp-action="Create" method="post" class="space-y-8">
         <input asp-for="ReturnUrl" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+        @if (draftErrors.Count > 0)
+        {
+            <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <ul class="list-inside list-disc space-y-1">
+                    @foreach (var error in draftErrors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </div>
+        }
         <div class="grid gap-5 md:grid-cols-2">
             <div>
                 <label asp-for="FirstName" class="block text-sm font-medium text-slate-800"></label>
@@ -55,9 +68,20 @@
                 <input asp-for="Country" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
                 <span asp-validation-for="Country" class="mt-1 block text-sm text-red-600"></span>
             </div>
+            <div>
+                <label asp-for="HowDidYouHear" class="block text-sm font-medium text-slate-800"></label>
+                <input asp-for="HowDidYouHear" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="HowDidYouHear" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+            <div class="md:col-span-2">
+                <label asp-for="Observations" class="block text-sm font-medium text-slate-800"></label>
+                <textarea asp-for="Observations" rows="3" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"></textarea>
+                <span asp-validation-for="Observations" class="mt-1 block text-sm text-red-600"></span>
+            </div>
             <div data-signature-field>
                 <label asp-for="ElectronicSignature" class="block text-sm font-medium text-slate-800"></label>
                 <input asp-for="ElectronicSignature" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <p class="mt-2 text-xs text-slate-500">Marca el relevo para habilitar la firma electronica.</p>
                 <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
             </div>
         </div>
@@ -66,7 +90,7 @@
                 <input asp-for="LiabilityWaiverSigned" class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
                 <span>
                     He leído el
-                    <a asp-controller="Customers" asp-action="LiabilityWaiver" class="font-medium text-slate-950 underline hover:text-slate-700">
+                    <a asp-controller="Customers" asp-action="LiabilityWaiver" asp-route-returnUrl="@waiverReturnUrl" class="font-medium text-slate-950 underline hover:text-slate-700">
                         relevo de responsabilidad
                     </a>
                 </span>

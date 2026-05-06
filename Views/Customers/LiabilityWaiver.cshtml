@@ -1,5 +1,6 @@
 @{
     ViewData["Title"] = "Relevo de Responsabilidad";
+    var returnUrl = ViewData["ReturnUrl"] as string ?? Url.Action("Create", "Customers")!;
 }
 <section class="mx-auto max-w-4xl py-8">
     <div class="mb-8">
@@ -31,9 +32,7 @@
         <p class="mt-8 font-semibold text-slate-900">Última actualización: 2024</p>
     </div>
     <div class="mt-8 flex items-center gap-3 border-t border-slate-200 pt-6">
-        <a
-            asp-controller="Customers"
-            asp-action="Create"
+        <a href="@returnUrl"
             class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
             Volver al Formulario
         </a>

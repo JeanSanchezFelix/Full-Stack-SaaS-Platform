@@ -1,0 +1,432 @@
+@model BookingCreateViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Cuenta de Usuario";
+    var waiverReturnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var customerInfo = ViewData["CustomerInfo"];
+    var startDateValue = Model.RequestedStart.ToString("yyyy-MM-dd");
+    var startTimeValue = Model.RequestedStart.ToString("HH:mm");
+    var endDateValue = Model.RequestedEnd?.ToString("yyyy-MM-dd") ?? string.Empty;
+    var endTimeValue = Model.RequestedEnd?.ToString("HH:mm") ?? string.Empty;
+    var durationHours = 1;
+    if (Model.RequestedEnd.HasValue)
+    {
+        var hours = (int)Math.Round((Model.RequestedEnd.Value - Model.RequestedStart).TotalHours);
+        if (hours == 1 || hours == 2 || hours == 3 || hours == 6)
+        {
+            durationHours = hours;
+        }
+    }
+    var userInfoProps = JsonSerializer.Serialize(new
+    {
+        customer = customerInfo,
+        licenseNumber = Model?.LicenseNumber
+    });
+}
+
+<section class="mx-auto max-w-4xl">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold tracking-normal text-slate-950">Reserva tu scooter</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Si ya nos visitaste, usa tu licencia para encontrar tu cuenta. Si es tu primera visita, ve al registro
+            primero.
+        </p>
+    </div>
+
+    @if (TempData["BookingCreated"] is string message)
+    {
+        <div class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            @message
+        </div>
+    }
+
+    <div data-svelte-component="UserInfoDisplay" data-props="@userInfoProps"></div>
+
+    <form id="booking-form" asp-controller="Bookings" asp-action="Create" method="post" class="space-y-8">
+        <div asp-validation-summary="ModelOnly"
+             class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+        <input asp-for="LicenseNumber" type="hidden" />
+
+
+
+        <div data-booking-fields class="grid gap-5 border-t border-slate-200 pt-6">
+            <input asp-for="RequestedStart" type="hidden" />
+            <input asp-for="RequestedEnd" type="hidden" />
+
+            <div class="rounded-md border border-amber-200 bg-amber-50 p-4">
+                <label for="duration-hours" class="block text-sm font-semibold text-amber-900">Duracion</label>
+                <p class="mt-1 text-xs text-amber-700">Solo permitimos 1, 2, 3 o 6 horas</p>
+                <select id="duration-hours"
+                        class="mt-3 w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    <option value="1" selected="@(durationHours == 1)">1 hora - $20</option>
+                    <option value="2" selected="@(durationHours == 2)">2 horas - $30</option>
+                    <option value="3" selected="@(durationHours == 3)">3 horas - $35</option>
+                    <option value="6" selected="@(durationHours == 6)">6 horas - $45</option>
+                </select>
+            </div>
+
+
+            <div class="rounded-md border border-slate-200 bg-slate-50 p-4">
+                <label for="requested-start-date" class="block text-sm font-semibold text-slate-900">Fecha</label>
+                <p class="mt-1 text-xs text-slate-600">Selecciona el dia de la reserva</p>
+                <input id="requested-start-date" type="date" value="@startDateValue"
+                       class="mt-3 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+            </div>
+
+            <div class="rounded-md border border-slate-200 bg-slate-50 p-4">
+                <p class="text-sm font-semibold text-slate-900">Inicio y termina</p>
+                <p class="mt-1 text-xs text-slate-600">Termina se calcula automaticamente segun la duracion</p>
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label for="requested-start-time"
+                               class="block text-sm font-medium text-slate-800">Inicio</label>
+                        <input id="requested-start-time" type="time" value="@startTimeValue"
+                               class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                        <span asp-validation-for="RequestedStart" class="mt-2 block text-sm text-red-600"></span>
+                    </div>
+                    <div>
+                        <label for="requested-end-time" class="block text-sm font-medium text-slate-800">Termina</label>
+                        <input id="requested-end-time" type="time" value="@endTimeValue" readonly
+                               class="auto-updated-indicator mt-2 w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700 shadow-sm" />
+                        <input id="requested-end-date" type="hidden" value="@endDateValue" />
+                        <p id="end-time-hint" class="mt-2 text-xs font-medium text-slate-500">Se actualiza
+                            automaticamente con la duracion seleccionada.</p>
+                            <span asp-validation-for="RequestedEnd" class="mt-2 block text-sm text-red-600"></span>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="grid gap-4 md:grid-cols-2 ">
+                    <div class="rounded-md border border-slate-200 bg-slate-50 p-4">
+                        <label asp-for="ScooterQuantity" class="block text-sm font-semibold text-slate-900"></label>
+                        <div class="mt-4 flex items-center gap-3">
+                            <input asp-for="ScooterQuantity" min="0" max="20"
+                                   class="h-10 w-20 rounded-md border border-slate-300 bg-white px-2 text-center text-sm font-semibold text-slate-900 shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                            <button type="button" data-step-target="ScooterQuantity" data-step="1"
+                                    class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-lg font-bold text-slate-800 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1">
+                                +
+                            </button>
+                            <button type="button" data-step-target="ScooterQuantity" data-step="-1"
+                                    class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-lg font-bold text-slate-800 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1">
+                                -
+                            </button>
+                        </div>
+                        <span asp-validation-for="ScooterQuantity" class="mt-3 block text-sm text-red-600"></span>
+                    </div>
+
+                    <div class="rounded-md border border-slate-200 bg-slate-50 p-4">
+                        <label asp-for="EbikeQuantity" class="block text-sm font-semibold text-slate-900"></label>
+                        <div class="mt-4 flex items-center gap-3">
+                            <input asp-for="EbikeQuantity" min="0" max="20"
+                                   class="h-10 w-20 rounded-md border border-slate-300 bg-white px-2 text-center text-sm font-semibold text-slate-900 shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                            <button type="button" data-step-target="EbikeQuantity" data-step="1"
+                                    class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-lg font-bold text-slate-800 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1">
+                                +
+                            </button>
+                            <button type="button" data-step-target="EbikeQuantity" data-step="-1"
+                                    class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-lg font-bold text-slate-800 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1">
+                                -
+                            </button>
+                        </div>
+                        <span asp-validation-for="EbikeQuantity" class="mt-3 block text-sm text-red-600"></span>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+            <div data-returning-fields class="grid gap-5 border-t border-slate-200 pt-6">
+
+                <aside class="rounded-md border border-emerald-200 bg-emerald-50 p-4">
+                    <p class="text-sm font-semibold text-emerald-900">Precio estimado</p>
+                    <p class="mt-1 text-xs text-emerald-700">Tarifa por unidad segun duracion x cantidad total</p>
+                    <div class="mt-3 grid gap-2 text-sm text-emerald-900 sm:grid-cols-2">
+                        <p>Tarifa por unidad: <strong id="price-per-unit">$20.00</strong></p>
+                        <p>Cantidad total: <strong id="quantity-total">1</strong></p>
+                        <p class="sm:col-span-2 text-base">Total estimado: <strong id="estimated-total">$20.00</strong></p>
+                    </div>
+                </aside>
+
+                <div class="space-y-4 rounded-md border border-slate-200 bg-slate-50 p-4">
+                    <label class="flex items-start gap-3 text-sm text-slate-700">
+                        <input asp-for="LiabilityWaiverSigned" id="waiver-signed-checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
+                        <span>
+                            He leido el
+                            <a asp-controller="Customers" asp-action="LiabilityWaiver" asp-route-returnUrl="@waiverReturnUrl" class="font-medium text-slate-950 underline hover:text-slate-700">
+                                relevo de responsabilidad
+                            </a>
+                        </span>
+                    </label>
+
+                    <div>
+                        <label asp-for="ElectronicSignature" class="block text-sm font-medium text-slate-800"></label>
+                        <input asp-for="ElectronicSignature" id="electronic-signature-input"
+                               class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                        <p id="signature-lock-hint" class="mt-2 text-xs text-slate-500">Marca el relevo para habilitar la firma electronica.</p>
+                        <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
+    <button type="submit" data-submit-label
+                        class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
+                    Solicitar reserva
+                </button>
+                <a asp-controller="Home" asp-action="Index"
+                       class="rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+</section>
+
+<style>
+    @@keyframes terminaPulse {
+        0% {
+            border-color: rgb(148 163 184);
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+        }
+
+        35% {
+            border-color: rgb(245 158 11);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.28);
+        }
+
+        100% {
+            border-color: rgb(148 163 184);
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+        }
+    }
+
+    .auto-updated-indicator {
+        transition: border-color 180ms ease;
+    }
+
+    .auto-updated-indicator.is-updating {
+        animation: terminaPulse 850ms ease-out;
+    }
+</style>
+
+@section Scripts {
+        <script>
+            (() => {
+                const form = document.getElementById('booking-form');
+                if (!form) {
+                    return;
+                }
+
+                const startHidden = form.querySelector('input[name="RequestedStart"]');
+                const endHidden = form.querySelector('input[name="RequestedEnd"]');
+                const startDate = document.getElementById('requested-start-date');
+                const startTime = document.getElementById('requested-start-time');
+                const endDate = document.getElementById('requested-end-date');
+                const endTime = document.getElementById('requested-end-time');
+                const durationSelect = document.getElementById('duration-hours');
+                const scooterInput = form.querySelector('input[name="ScooterQuantity"]');
+                const ebikeInput = form.querySelector('input[name="EbikeQuantity"]');
+                const unitPriceLabel = document.getElementById('price-per-unit');
+                const quantityTotalLabel = document.getElementById('quantity-total');
+                const estimatedTotalLabel = document.getElementById('estimated-total');
+                const endTimeHint = document.getElementById('end-time-hint');
+                const waiverCheckbox = document.getElementById('waiver-signed-checkbox');
+                const signatureInput = document.getElementById('electronic-signature-input');
+                const signatureHint = document.getElementById('signature-lock-hint');
+                const priceMap = { 1: 20, 2: 30, 3: 35, 6: 45 };
+
+                const allowedDurations = [1, 2, 3, 6];
+
+                const toDateTimeLocal = (dateValue, timeValue) => {
+                    if (!dateValue || !timeValue) {
+                        return '';
+                    }
+
+                    return `${dateValue}T${timeValue}`;
+                };
+
+                const getLocalDateTime = (dateValue, timeValue) => {
+                    const value = toDateTimeLocal(dateValue, timeValue);
+                    if (!value) {
+                        return null;
+                    }
+
+                    const parsed = new Date(value);
+                    if (Number.isNaN(parsed.getTime())) {
+                        return null;
+                    }
+                    return parsed;
+                };
+
+                const toLocalParts = (date) => {
+                    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000);
+                    const iso = local.toISOString().slice(0, 16);
+                    return iso.split('T');
+                };
+
+                const triggerEndIndicator = () => {
+                    if (!endTime) {
+                        return;
+                    }
+
+                    endTime.classList.remove('is-updating');
+                    // Force reflow so the animation restarts every time.
+                    void endTime.offsetWidth;
+                    endTime.classList.add('is-updating');
+                };
+
+                const applyDurationToEnd = () => {
+                    const start = getLocalDateTime(startDate?.value, startTime?.value);
+                    if (!start || !durationSelect || !endDate || !endTime) {
+                        return;
+                    }
+
+                    const durationHours = Number(durationSelect.value);
+                    const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+                    const [computedDate, computedTime] = toLocalParts(end);
+                    endDate.value = computedDate;
+                    endTime.value = computedTime;
+                    triggerEndIndicator();
+
+                    if (endTimeHint) {
+                        endTimeHint.textContent = `Termina se ajusta automaticamente a +${durationHours} hora${durationHours === 1 ? '' : 's'} desde Inicio.`;
+                    }
+                };
+
+                const applyEndToDuration = () => {
+                    const start = getLocalDateTime(startDate?.value, startTime?.value);
+                    const end = getLocalDateTime(startDate?.value, endTime?.value);
+                    if (!start || !end || !durationSelect) {
+                        return;
+                    }
+
+                    let duration = Math.round((end.getTime() - start.getTime()) / 3600000);
+                    if (duration <= 0) {
+                        duration += 24;
+                    }
+
+                    if (!allowedDurations.includes(duration)) {
+                        const nearest = allowedDurations.reduce((best, candidate) =>
+                            Math.abs(candidate - duration) < Math.abs(best - duration) ? candidate : best
+                            , allowedDurations[0]);
+                        duration = nearest;
+                    }
+
+                    durationSelect.value = String(duration);
+                    applyDurationToEnd();
+                };
+
+                const syncHiddenFields = () => {
+                    if (startHidden) {
+                        startHidden.value = toDateTimeLocal(startDate?.value, startTime?.value);
+                    }
+
+                    if (endHidden) {
+                        endHidden.value = toDateTimeLocal(endDate?.value, endTime?.value);
+                    }
+                };
+
+                const syncEstimate = () => {
+                    const durationHours = Number(durationSelect?.value || 1);
+                    const unitPrice = priceMap[durationHours] || 20;
+                    const scooters = Math.max(0, Number(scooterInput?.value || 0));
+                    const ebikes = Math.max(0, Number(ebikeInput?.value || 0));
+                    const totalQuantity = scooters + ebikes;
+                    const estimatedTotal = unitPrice * totalQuantity;
+
+                    if (unitPriceLabel) {
+                        unitPriceLabel.textContent = `$${unitPrice.toFixed(2)}`;
+                    }
+                    if (quantityTotalLabel) {
+                        quantityTotalLabel.textContent = String(totalQuantity);
+                    }
+                    if (estimatedTotalLabel) {
+                        estimatedTotalLabel.textContent = `$${estimatedTotal.toFixed(2)}`;
+                    }
+                };
+
+                const syncSignatureLock = () => {
+                    if (!waiverCheckbox || !signatureInput) {
+                        return;
+                    }
+
+                    const enabled = waiverCheckbox.checked;
+                    signatureInput.disabled = !enabled;
+
+                    if (!enabled) {
+                        signatureInput.value = '';
+                        signatureInput.classList.add('bg-slate-100', 'text-slate-500');
+                        if (signatureHint) {
+                            signatureHint.textContent = 'Marca el relevo para habilitar la firma electronica.';
+                        }
+                    } else {
+                        signatureInput.classList.remove('bg-slate-100', 'text-slate-500');
+                        if (signatureHint) {
+                            signatureHint.textContent = 'Firma electronica habilitada.';
+                        }
+                    }
+                };
+
+                startDate?.addEventListener('change', () => {
+                    applyDurationToEnd();
+                    syncHiddenFields();
+                    syncEstimate();
+                });
+
+                startTime?.addEventListener('change', () => {
+                    applyDurationToEnd();
+                    syncHiddenFields();
+                    syncEstimate();
+                });
+
+                durationSelect?.addEventListener('change', () => {
+                    applyDurationToEnd();
+                    syncHiddenFields();
+                    syncEstimate();
+                });
+
+                [startDate, startTime, durationSelect].forEach((input) => {
+                    input?.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                        }
+                    });
+                });
+
+                document.querySelectorAll('[data-step-target]').forEach((button) => {
+                    button.addEventListener('click', () => {
+                        const targetName = button.getAttribute('data-step-target');
+                        const step = Number(button.getAttribute('data-step')) || 0;
+                        const input = form.querySelector(`input[name="${targetName}"]`);
+                        if (!input) {
+                            return;
+                        }
+
+                        const min = Number(input.min || 0);
+                        const max = Number(input.max || Number.MAX_SAFE_INTEGER);
+                        const current = Number(input.value || 0);
+                        const next = Math.min(max, Math.max(min, current + step));
+                        input.value = String(next);
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        syncEstimate();
+                    });
+                });
+
+                [scooterInput, ebikeInput].forEach((input) => {
+                    input?.addEventListener('change', syncEstimate);
+                    input?.addEventListener('input', syncEstimate);
+                });
+
+                waiverCheckbox?.addEventListener('change', syncSignatureLock);
+
+                form.addEventListener('submit', syncHiddenFields);
+                applyDurationToEnd();
+                syncHiddenFields();
+                syncEstimate();
+                syncSignatureLock();
+            })();
+        </script>
+    }

@@ -2,14 +2,39 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SvelteHybridMVC.Infrastructure.Data;
 using SvelteHybridMVC.Models;
+using System.Text.Json;
 
 namespace SvelteHybridMVC.Controllers;
 
-public class CustomersController(AppDbContext dbContext) : Controller
+public class CustomersController : Controller
 {
+    private readonly AppDbContext _dbContext;
+    private const string CustomerDraftTempDataKey = "CustomerCreateDraft";
+    private const string CustomerDraftErrorsTempDataKey = "CustomerCreateDraftErrors";
+
+    public CustomersController(AppDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
     [HttpGet]
     public IActionResult Create(string? returnUrl = null, string? licenseNumber = null)
     {
+        if (TempData[CustomerDraftErrorsTempDataKey] is string errorsJson)
+        {
+            var errors = JsonSerializer.Deserialize<List<string>>(errorsJson) ?? [];
+            ViewData["DraftErrors"] = errors;
+        }
+
+        if (TempData[CustomerDraftTempDataKey] is string draftJson)
+        {
+            var draft = JsonSerializer.Deserialize<CustomerIntakeViewModel>(draftJson);
+            if (draft is not null)
+            {
+                return View(draft);
+            }
+        }
+
         return View(new CustomerIntakeViewModel
         {
             Country = "Puerto Rico",
@@ -19,8 +44,11 @@ public class CustomersController(AppDbContext dbContext) : Controller
     }
 
     [HttpGet]
-    public IActionResult LiabilityWaiver()
+    public IActionResult LiabilityWaiver(string? returnUrl = null)
     {
+        ViewData["ReturnUrl"] = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+            ? returnUrl
+            : Url.Action(nameof(Create), "Customers");
         return View();
     }
 
@@ -30,12 +58,25 @@ public class CustomersController(AppDbContext dbContext) : Controller
     {
         if (model.LiabilityWaiverSigned && string.IsNullOrWhiteSpace(model.ElectronicSignature))
         {
-            ModelState.AddModelError(nameof(model.ElectronicSignature), "Electronic signature is required when the waiver is signed.");
+            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electronica es requerida para guardar su información.");
         }
 
         if (!ModelState.IsValid)
         {
-            return View(model);
+            var errors = ModelState.Values
+                .SelectMany(state => state.Errors)
+                .Select(error => error.ErrorMessage)
+                .Where(message => !string.IsNullOrWhiteSpace(message))
+                .Distinct()
+                .ToList();
+
+            TempData[CustomerDraftTempDataKey] = JsonSerializer.Serialize(model);
+            TempData[CustomerDraftErrorsTempDataKey] = JsonSerializer.Serialize(errors);
+            return RedirectToAction(nameof(Create), new
+            {
+                returnUrl = model.ReturnUrl,
+                licenseNumber = model.LicenseNumber
+            });
         }
 
         var customer = new Customer
@@ -48,6 +89,8 @@ public class CustomersController(AppDbContext dbContext) : Controller
             Email = NormalizeOptional(model.Email),
             City = model.City.Trim(),
             Country = model.Country.Trim(),
+            HowDidYouHear = NormalizeOptional(model.HowDidYouHear),
+            Observations = NormalizeOptional(model.Observations),
             LiabilityWaiverSigned = model.LiabilityWaiverSigned,
             LiabilityWaiverSignedAt = model.LiabilityWaiverSigned ? DateTime.UtcNow : null,
             ElectronicSignature = NormalizeOptional(model.ElectronicSignature),
@@ -56,8 +99,8 @@ public class CustomersController(AppDbContext dbContext) : Controller
             UpdatedAt = DateTime.UtcNow
         };
 
-        dbContext.Customers.Add(customer);
-        await dbContext.SaveChangesAsync();
+        _dbContext.Customers.Add(customer);
+        await _dbContext.SaveChangesAsync();
 
         TempData["CustomerCreated"] = $"{customer.FirstName} {customer.LastName} was saved with customer code {customer.CustomerCode}.";
 
@@ -88,7 +131,7 @@ public class CustomersController(AppDbContext dbContext) : Controller
         {
             code = $"{prefix}-{Random.Shared.Next(1000, 10000)}";
         }
-        while (await dbContext.Customers.AnyAsync(customer => customer.CustomerCode == code));
+        while (await _dbContext.Customers.AnyAsync(customer => customer.CustomerCode == code));
 
         return code;
     }

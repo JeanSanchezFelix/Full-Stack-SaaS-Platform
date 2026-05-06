@@ -1,4 +1,4 @@
-@model BookingCreateViewModel
+@model UserAuthViewModel
 
 @{
     ViewData["Title"] = "Reservar";
@@ -44,15 +44,9 @@
                 <input asp-for="LicenseNumber" autocomplete="off" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
                 <span asp-validation-for="LicenseNumber" class="mt-1 block text-sm text-red-600"></span>
             </div>
-
-            <div>
-                <label asp-for="ElectronicSignature" class="block text-sm font-medium text-slate-800"></label>
-                <input asp-for="ElectronicSignature" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
-                <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
-            </div>
         </div>
 
-        <div data-booking-fields class="grid gap-5 border-t border-slate-200 pt-6 md:grid-cols-4">
+        @* <div data-booking-fields class="grid gap-5 border-t border-slate-200 pt-6 md:grid-cols-4">
             <div>
                 <label asp-for="RequestedStart" class="block text-sm font-medium text-slate-800"></label>
                 <input asp-for="RequestedStart" type="datetime-local" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
@@ -76,7 +70,7 @@
                 <input asp-for="EbikeQuantity" min="0" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
                 <span asp-validation-for="EbikeQuantity" class="mt-1 block text-sm text-red-600"></span>
             </div>
-        </div>
+        </div> *@
 
         <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
             <button type="submit" data-submit-label class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">

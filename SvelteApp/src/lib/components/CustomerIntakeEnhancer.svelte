@@ -29,7 +29,8 @@
 
     const signatureInput = form.querySelector('input[name="ElectronicSignature"]');
     if (signatureInput) {
-      signatureInput.required = waiverSigned;
+      // Keep validation server-side to avoid browser popups.
+      signatureInput.required = false;
       signatureInput.disabled = !waiverSigned;
       signatureInput.closest('[data-signature-field]')?.classList.toggle('opacity-50', !waiverSigned);
     }
