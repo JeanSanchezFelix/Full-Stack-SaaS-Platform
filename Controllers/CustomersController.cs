@@ -80,6 +80,15 @@ public class CustomersController : Controller
         {
             ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electronica es requerida para guardar su informacion.");
         }
+        else if (!IsValidElectronicSignature(model.ElectronicSignature))
+        {
+            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electronica debe contener su nombre.");
+        }
+
+        if (!model.LiabilityWaiverSigned)
+        {
+            ModelState.AddModelError(nameof(model.LiabilityWaiverSigned), "Debe aceptar el relevo de responsabilidad para continuar.");
+        }
 
         if (!string.IsNullOrWhiteSpace(normalizedLicense) && await LicenseExistsAsync(normalizedLicense))
         {
@@ -225,5 +234,16 @@ public class CustomersController : Controller
         }
 
         return digits.Length > 0 ? $"+{digits}" : phone.Trim();
+    }
+
+    private static bool IsValidElectronicSignature(string signature)
+    {
+        var normalized = signature.Trim();
+        if (normalized.Length < 2)
+        {
+            return false;
+        }
+
+        return normalized.Any(char.IsLetter);
     }
 }

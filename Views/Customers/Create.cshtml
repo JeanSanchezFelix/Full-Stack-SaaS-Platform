@@ -79,10 +79,10 @@
         </div>
             <div data-signature-field>
                 <label asp-for="ElectronicSignature" class="block text-sm font-medium text-slate-800">
-                    @Html.DisplayNameFor(model => model.ElectronicSignature) <span class="text-red-600">*</span>
+                    @Html.DisplayNameFor(model => model.ElectronicSignature) <span class="text-red-600">&nbsp*</span>
                 </label>
-                <input asp-for="ElectronicSignature" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
-                <p class="mt-2 text-xs text-slate-500">Requerida para guardar el registro.</p>
+                <input asp-for="ElectronicSignature" required class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <p class="mt-2 text-xs text-slate-500">Es requerido su nombre completo para guardar el registro.</p>
                 <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
             </div>
         <p class="text-xs text-slate-500 text-right">Los campos con <span class="text-red-600">*</span> son requeridos.</p>
@@ -96,9 +96,10 @@
                     </a>
                 </span>
             </label>
+            <span data-waiver-client-error class="hidden mt-1 text-sm text-red-600">Debes aceptar el relevo de responsabilidad para continuar.</span>
             <label class="flex items-start gap-3 text-sm text-slate-700">
                 <input asp-for="AuthorizeRecontact" class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
-                <span>Autorizo recibir ofertas o mensajes promocionales de Scooter de la Bahía por WhatsApp</span>
+                <span>Autorizo recibir ofertas o mensajes promocionales de Scooter de la Bahía por correo electrónico o WhatsApp</span>
             </label>
         </div>
         <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
@@ -156,7 +157,29 @@
             });
             localStorage.setItem('customer-intake-form', JSON.stringify(formData));
         }
-    });</script>
+    });
+
+    const waiverCheckbox = form.querySelector('input[name="LiabilityWaiverSigned"][type="checkbox"]');
+    const waiverClientError = form.querySelector('[data-waiver-client-error]');
+
+    const syncWaiverClientError = () => {
+        if (!waiverCheckbox || !waiverClientError) return;
+        waiverClientError.classList.toggle('hidden', waiverCheckbox.checked);
+    };
+
+    waiverCheckbox?.addEventListener('change', syncWaiverClientError);
+
+    form.addEventListener('submit', (e) => {
+        const waiverChecked = waiverCheckbox?.checked;
+        if (!waiverChecked) {
+            e.preventDefault();
+            syncWaiverClientError();
+            waiverCheckbox?.focus();
+        }
+    });
+</script>
+
+
 
 
 

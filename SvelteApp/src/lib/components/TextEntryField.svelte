@@ -1,14 +1,16 @@
 <script>
-  export let fieldName = '';
-  export let label = '';
-  export let value = '';
-  export let error = '';
-  export let type = 'text';
-  export let required = false;
-  export let hint = '';
-  export let multiline = false;
-  export let rows = 3;
-  export let wrapperClass = '';
+  let {
+    fieldName = '',
+    label = '',
+    value = '',
+    error = '',
+    type = 'text',
+    required = false,
+    hint = '',
+    multiline = false,
+    rows = 3,
+    wrapperClass = '',
+  } = $props();
 </script>
 
 <div class={wrapperClass}>

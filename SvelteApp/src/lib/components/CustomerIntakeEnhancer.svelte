@@ -1,14 +1,14 @@
 <script>
   import { onMount } from 'svelte';
 
-  export let formId = 'customer-intake-form';
+  let { formId = 'customer-intake-form' } = $props();
 
   let form;
-  let values = {};
-  let completion = 0;
-  let codePreview = 'CLIENT-0000';
-  let waiverSigned = false;
-  let signatureRequired = false;
+  let values = $state({});
+  let completion = $state(0);
+  let codePreview = $state('CLIENT-0000');
+  let waiverSigned = $state(false);
+  let signatureRequired = $state(false);
 
   const requiredFields = ['FirstName', 'LastName', 'LicenseNumber', 'PhoneNumber', 'Email', 'City', 'Country', 'ElectronicSignature'];
 
@@ -28,7 +28,7 @@
 
     const signatureInput = form.querySelector('input[name="ElectronicSignature"]');
     if (signatureInput) {
-      signatureInput.required = false;
+      signatureInput.required = waiverSigned;
       signatureInput.disabled = !waiverSigned;
       signatureInput.closest('[data-signature-field]')?.classList.toggle('opacity-50', !waiverSigned);
 

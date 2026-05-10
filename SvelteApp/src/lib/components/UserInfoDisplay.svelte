@@ -1,20 +1,19 @@
 <script>
-  export let customer = null;
-  export let licenseNumber = "";
-  let showBookings = false;
+  let { customer = null, licenseNumber = "" } = $props();
+  let showBookings = $state(false);
 
-  $: fullName = customer
+  const fullName = $derived(customer
     ? `${customer.firstName || ""} ${customer.lastName || ""}`.trim()
-    : "";
-  $: location = [customer?.city, customer?.country].filter(Boolean).join(", ");
-  $: initials = fullName
+    : "");
+  const location = $derived([customer?.city, customer?.country].filter(Boolean).join(", "));
+  const initials = $derived(fullName
     ? fullName
         .split(/\s+/)
         .slice(0, 2)
         .map((part) => part[0])
         .join("")
         .toUpperCase()
-    : "U";
+    : "U");
 
   function formatDate(value) {
     if (!value) {
@@ -49,7 +48,7 @@
       <button
         type="button"
         class="w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100"
-        on:click={() => (showBookings = true)}
+        onclick={() => (showBookings = true)}
       >
         Ver Reservas ({customer.bookings?.length || 0})
       </button>
@@ -113,7 +112,7 @@
         <button
           type="button"
           class="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100"
-          on:click={() => (showBookings = false)}>Cerrar</button
+          onclick={() => (showBookings = false)}>Cerrar</button
         >
       </div>
 

@@ -1,16 +1,15 @@
 <script>
   import { onMount } from 'svelte';
 
-  export let formId = 'booking-form';
-  export let lookupUrl = '/Bookings/Lookup';
+  let { formId = 'booking-form', lookupUrl = '/Bookings/Lookup' } = $props();
 
   let form;
   let licenseInput;
-  let firstTime = false;
-  let loading = false;
-  let customers = [];
-  let selectedCustomer = null;
-  let message = 'Entra una licencia para buscar cuentas existentes.';
+  let firstTime = $state(false);
+  let loading = $state(false);
+  let customers = $state([]);
+  let selectedCustomer = $state(null);
+  let message = $state('Entra una licencia para buscar cuentas existentes.');
   let lookupTimer;
 
   function syncMode() {
@@ -101,7 +100,7 @@
         <button
           type="button"
           class="rounded-md border border-slate-200 bg-white px-4 py-3 text-left text-sm shadow-sm transition hover:border-slate-400"
-          on:click={() => selectCustomer(customer)}>
+          onclick={() => selectCustomer(customer)}>
           <span class="block font-semibold text-slate-900">{customer.firstName} {customer.lastName}</span>
           <span class="mt-1 block text-slate-600">{customer.licenseNumber} - {customer.city}, {customer.country}</span>
         </button>
