@@ -10,7 +10,7 @@
   let waiverSigned = false;
   let signatureRequired = false;
 
-  const requiredFields = ['FirstName', 'LastName', 'PhoneNumber', 'City', 'Country'];
+  const requiredFields = ['FirstName', 'LastName', 'LicenseNumber', 'PhoneNumber', 'Email', 'City', 'Country', 'ElectronicSignature'];
 
   function readForm() {
     if (!form) {
@@ -23,16 +23,18 @@
     signatureRequired = waiverSigned;
 
     const filledRequiredCount = requiredFields.filter((field) => String(values[field] || '').trim().length > 0).length;
-    const signatureComplete = !waiverSigned || String(values.ElectronicSignature || '').trim().length > 0;
-    completion = Math.round(((filledRequiredCount + (signatureComplete ? 1 : 0)) / (requiredFields.length + 1)) * 100);
+    completion = Math.round((filledRequiredCount / requiredFields.length) * 100);
     codePreview = buildCodePreview(values.FirstName, values.LastName);
 
     const signatureInput = form.querySelector('input[name="ElectronicSignature"]');
     if (signatureInput) {
-      // Keep validation server-side to avoid browser popups.
       signatureInput.required = false;
       signatureInput.disabled = !waiverSigned;
       signatureInput.closest('[data-signature-field]')?.classList.toggle('opacity-50', !waiverSigned);
+
+      if (!waiverSigned && signatureInput.value) {
+        signatureInput.value = '';
+      }
     }
   }
 
@@ -86,10 +88,11 @@
   <div class="rounded-md border border-slate-200 bg-white px-4 py-4 md:min-w-64">
     <p class="text-sm font-semibold text-slate-900">Estado del Relevo de Responsabilidad</p>
     <p class="mt-1 text-sm text-slate-600">
-      {waiverSigned ? 'Se requiere firma antes de guardar.' : 'La firma se desbloquea después de que se marque el relevo de responsabilidad.'}
+      {waiverSigned ? 'Se requiere firma antes de guardar.' : 'La firma se desbloquea despues de que se marque el relevo de responsabilidad.'}
     </p>
     {#if signatureRequired && !values.ElectronicSignature}
       <p class="mt-2 text-sm font-medium text-amber-700">Esperando firma electrónica...</p>
     {/if}
   </div>
 </aside>
+

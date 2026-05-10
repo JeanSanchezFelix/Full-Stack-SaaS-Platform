@@ -1,11 +1,13 @@
 import { mountCustomerIntakeEnhancer } from './CustomerIntakeEnhancer.js';
 import { mountBookingLookupEnhancer } from './BookingLookupEnhancer.js';
 import { mountUserInfoDisplay } from './UserInfoDisplay.js';
+import { mountTextEntryField } from './TextEntryField.js';
 
 const componentMounts = {
   CustomerIntakeEnhancer: mountCustomerIntakeEnhancer,
   BookingLookupEnhancer: mountBookingLookupEnhancer,
-  UserInfoDisplay: mountUserInfoDisplay
+  UserInfoDisplay: mountUserInfoDisplay,
+  TextEntryField: mountTextEntryField
 };
 
 function parseProps(element) {

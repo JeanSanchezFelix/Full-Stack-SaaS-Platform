@@ -10,7 +10,6 @@
             <h1 class="text-3xl font-bold tracking-normal text-slate-950">Panel de Administración</h1>
             <p class="mt-2 text-sm leading-6 text-slate-600">Aprueba reservas pendientes para crear la entrada en rental.</p>
         </div>
-        <a asp-action="Create" class="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">Nueva reserva</a>
     </div>
 
     @if (TempData["BookingApproved"] is string message)
@@ -66,7 +65,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    @foreach (var customer in Model.Customers)
+                    @foreach (AdminCustomerListItemViewModel customer in Model.Customers)
                     {
                         <tr>
                             <td class="px-4 py-3 font-medium text-slate-900">@customer.CustomerCode</td>
@@ -75,11 +74,11 @@
                             <td class="px-4 py-3 text-slate-600">@customer.PhoneNumber</td>
                             <td class="px-4 py-3 text-slate-600">@customer.Email</td>
                             <td class="px-4 py-3 text-slate-600">@customer.City, @customer.Country</td>
-                            <td class="px-4 py-3 text-slate-600">@(customer.LiabilityWaiverSigned ? "si" : "no")</td>
+                            <td class="px-4 py-3 text-slate-600">@(customer.LiabilityWaiverSigned ? "Sí" : "No")</td>
                             <td class="px-4 py-3 text-slate-600">@customer.ElectronicSignature</td>
                             <td class="px-4 py-3 text-slate-600">@customer.HowDidYouHear</td>
                             <td class="px-4 py-3 text-slate-600">@customer.Observations</td>
-                            <td class="px-4 py-3 text-slate-600">@(customer.AuthorizeRecontact ? "si" : "no")</td>
+                            <td class="px-4 py-3 text-slate-600">@(customer.AuthorizeRecontact ? "Sí" : "No")</td>
                         </tr>
                     }
                 </tbody>

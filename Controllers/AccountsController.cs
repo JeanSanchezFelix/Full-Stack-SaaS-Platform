@@ -128,6 +128,7 @@ public class AccountsController(AppDbContext dbContext) : Controller
                     country = customer.Country,
                     liabilityWaiverSigned = customer.LiabilityWaiverSigned,
                     liabilityWaiverSignedAt = customer.LiabilityWaiverSignedAt,
+                    createdAt = customer.CreatedAt,
                     latestBookingStatus = customer.Bookings
                         .OrderByDescending(booking => booking.CreatedAt)
                         .Select(booking => NormalizeStatus(booking.Status))

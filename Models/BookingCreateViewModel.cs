@@ -25,6 +25,6 @@ public class BookingCreateViewModel
     [Display(Name = "He leido el relevo de responsabilidad.")]
     public bool LiabilityWaiverSigned { get; set; }
 
-    [Display(Name = "Firma electronica")]
+    [Display(Name = "Firma electrónica")]
     public string? ElectronicSignature { get; set; }
 }

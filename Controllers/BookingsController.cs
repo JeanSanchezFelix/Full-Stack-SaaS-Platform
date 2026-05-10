@@ -106,7 +106,7 @@ public class BookingsController : Controller
 
         if (string.IsNullOrWhiteSpace(model.LicenseNumber))
         {
-            ModelState.AddModelError(nameof(model.LicenseNumber), "Entra tu numero de licencia para buscar tu cuenta.");
+            ModelState.AddModelError(nameof(model.LicenseNumber), "Ingresa tu número de licencia para buscar tu cuenta.");
         }
 
         if (!ModelState.IsValid)
@@ -175,7 +175,7 @@ public class BookingsController : Controller
 
         if (string.IsNullOrWhiteSpace(model.ElectronicSignature))
         {
-            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electronica es requerida para solicitar la reserva.");
+            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electrónica es requerida para solicitar la reserva.");
         }
 
         if (!ModelState.IsValid)

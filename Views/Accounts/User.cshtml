@@ -5,6 +5,7 @@
     ViewData["Title"] = "Cuenta de Usuario";
     var waiverReturnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var customerInfo = ViewData["CustomerInfo"];
+    var bookingCreated = TempData["BookingCreated"] is string message ? message : null;
     var startDateValue = Model.RequestedStart.ToString("yyyy-MM-dd");
     var startTimeValue = Model.RequestedStart.ToString("HH:mm");
     var endDateValue = Model.RequestedEnd?.ToString("yyyy-MM-dd") ?? string.Empty;
@@ -29,15 +30,16 @@
     <div class="mb-8">
         <h1 class="text-3xl font-bold tracking-normal text-slate-950">Reserva tu scooter</h1>
         <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Si ya nos visitaste, usa tu licencia para encontrar tu cuenta. Si es tu primera visita, ve al registro
-            primero.
+            Este es tu espacio personal para gestionar tus reservas. Desde aquí puedes solicitar nuevas reservas,
+            revisar los detalles de tus próximas aventuras sobre ruedas, y mantener tu información de contacto
+            actualizada.
         </p>
     </div>
 
-    @if (TempData["BookingCreated"] is string message)
+    @if (bookingCreated is string createdMessage)
     {
         <div class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-            @message
+            @createdMessage
         </div>
     }
 
@@ -55,8 +57,8 @@
             <input asp-for="RequestedEnd" type="hidden" />
 
             <div class="rounded-md border border-amber-200 bg-amber-50 p-4">
-                <label for="duration-hours" class="block text-sm font-semibold text-amber-900">Duracion</label>
-                <p class="mt-1 text-xs text-amber-700">Solo permitimos 1, 2, 3 o 6 horas</p>
+                <label for="duration-hours" class="block text-sm font-semibold text-amber-900">Duración</label>
+                <p class="mt-1 text-xs text-amber-700">Solo permitimos 1, 2, 3 ó 6 horas</p>
                 <select id="duration-hours"
                         class="mt-3 w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
                     <option value="1" selected="@(durationHours == 1)">1 hora - $20</option>
@@ -69,24 +71,27 @@
 
             <div class="rounded-md border border-slate-200 bg-slate-50 p-4">
                 <label for="requested-start-date" class="block text-sm font-semibold text-slate-900">Fecha</label>
-                <p class="mt-1 text-xs text-slate-600">Selecciona el dia de la reserva</p>
+                <p class="mt-1 text-xs text-slate-600">Selecciona el  día de la reserva</p>
                 <input id="requested-start-date" type="date" value="@startDateValue"
                        class="mt-3 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
             </div>
 
             <div class="rounded-md border border-slate-200 bg-slate-50 p-4">
-                <p class="text-sm font-semibold text-slate-900">Inicio y termina</p>
-                <p class="mt-1 text-xs text-slate-600">Termina se calcula automaticamente segun la duracion</p>
+                <p class="text-sm font-semibold text-slate-900">Horario de Reserva</p>
+                <p class="mt-1 text-xs text-slate-600">
+                    La hora de finalización se ajusta automáticamente con la duración seleccionada.
+                </p>
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <div>
                         <label for="requested-start-time"
-                               class="block text-sm font-medium text-slate-800">Inicio</label>
+                               class="block text-sm font-medium text-slate-800">Comienza</label>
                         <input id="requested-start-time" type="time" value="@startTimeValue"
                                class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
                         <span asp-validation-for="RequestedStart" class="mt-2 block text-sm text-red-600"></span>
                     </div>
                     <div>
-                        <label for="requested-end-time" class="block text-sm font-medium text-slate-800">Termina</label>
+                        <label for="requested-end-time"
+                               class="block text-sm font-medium text-slate-800">Concluye</label>
                         <input id="requested-end-time" type="time" value="@endTimeValue" readonly
                                class="auto-updated-indicator mt-2 w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700 shadow-sm" />
                         <input id="requested-end-date" type="hidden" value="@endDateValue" />
@@ -143,7 +148,7 @@
 
                 <aside class="rounded-md border border-emerald-200 bg-emerald-50 p-4">
                     <p class="text-sm font-semibold text-emerald-900">Precio estimado</p>
-                    <p class="mt-1 text-xs text-emerald-700">Tarifa por unidad segun duracion x cantidad total</p>
+                    <p class="mt-1 text-xs text-emerald-700">Tarifa por unidad según duración × cantidad total</p>
                     <div class="mt-3 grid gap-2 text-sm text-emerald-900 sm:grid-cols-2">
                         <p>Tarifa por unidad: <strong id="price-per-unit">$20.00</strong></p>
                         <p>Cantidad total: <strong id="quantity-total">1</strong></p>
@@ -153,10 +158,13 @@
 
                 <div class="space-y-4 rounded-md border border-slate-200 bg-slate-50 p-4">
                     <label class="flex items-start gap-3 text-sm text-slate-700">
-                        <input asp-for="LiabilityWaiverSigned" id="waiver-signed-checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
+                        <input asp-for="LiabilityWaiverSigned" id="waiver-signed-checkbox"
+                               class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
                         <span>
-                            He leido el
-                            <a asp-controller="Customers" asp-action="LiabilityWaiver" asp-route-returnUrl="@waiverReturnUrl" class="font-medium text-slate-950 underline hover:text-slate-700">
+                            He leído el
+                            <a asp-controller="Customers" asp-action="LiabilityWaiver"
+                                   asp-route-returnUrl="@waiverReturnUrl"
+                                   class="font-medium text-slate-950 underline hover:text-slate-700">
                                 relevo de responsabilidad
                             </a>
                         </span>
@@ -166,267 +174,352 @@
                         <label asp-for="ElectronicSignature" class="block text-sm font-medium text-slate-800"></label>
                         <input asp-for="ElectronicSignature" id="electronic-signature-input"
                                class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
-                        <p id="signature-lock-hint" class="mt-2 text-xs text-slate-500">Marca el relevo para habilitar la firma electronica.</p>
-                        <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
+                        <p id="signature-lock-hint" class="mt-2 text-xs text-slate-500">Marca el relevo para habilidar la
+                            firma electrónica.</p>
+                            <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
-    <button type="submit" data-submit-label
-                        class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
-                    Solicitar reserva
-                </button>
-                <a asp-controller="Home" asp-action="Index"
-                       class="rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-                    Cancelar
-                </a>
-            </div>
-        </form>
-</section>
+                <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
+                    <button type="submit" data-submit-label
+                            class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
+                        Solicitar reserva
+                    </button>
+                    <a asp-controller="Home" asp-action="Index"
+                           class="rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </section>
 
-<style>
-    @@keyframes terminaPulse {
-        0% {
-            border-color: rgb(148 163 184);
-            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-        }
-
-        35% {
-            border-color: rgb(245 158 11);
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.28);
-        }
-
-        100% {
-            border-color: rgb(148 163 184);
-            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-        }
-    }
-
-    .auto-updated-indicator {
-        transition: border-color 180ms ease;
-    }
-
-    .auto-updated-indicator.is-updating {
-        animation: terminaPulse 850ms ease-out;
-    }
-</style>
-
-@section Scripts {
-        <script>
-            (() => {
-                const form = document.getElementById('booking-form');
-                if (!form) {
-                    return;
+        <style>
+            @@keyframes terminaPulse {
+                0% {
+                    border-color: rgb(148 163 184);
+                    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
                 }
 
-                const startHidden = form.querySelector('input[name="RequestedStart"]');
-                const endHidden = form.querySelector('input[name="RequestedEnd"]');
-                const startDate = document.getElementById('requested-start-date');
-                const startTime = document.getElementById('requested-start-time');
-                const endDate = document.getElementById('requested-end-date');
-                const endTime = document.getElementById('requested-end-time');
-                const durationSelect = document.getElementById('duration-hours');
-                const scooterInput = form.querySelector('input[name="ScooterQuantity"]');
-                const ebikeInput = form.querySelector('input[name="EbikeQuantity"]');
-                const unitPriceLabel = document.getElementById('price-per-unit');
-                const quantityTotalLabel = document.getElementById('quantity-total');
-                const estimatedTotalLabel = document.getElementById('estimated-total');
-                const endTimeHint = document.getElementById('end-time-hint');
-                const waiverCheckbox = document.getElementById('waiver-signed-checkbox');
-                const signatureInput = document.getElementById('electronic-signature-input');
-                const signatureHint = document.getElementById('signature-lock-hint');
-                const priceMap = { 1: 20, 2: 30, 3: 35, 6: 45 };
+                35% {
+                    border-color: rgb(245 158 11);
+                    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.28);
+                }
 
-                const allowedDurations = [1, 2, 3, 6];
+                100% {
+                    border-color: rgb(148 163 184);
+                    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+                }
+            }
 
-                const toDateTimeLocal = (dateValue, timeValue) => {
-                    if (!dateValue || !timeValue) {
-                        return '';
-                    }
+            .auto-updated-indicator {
+                transition: border-color 180ms ease;
+            }
 
-                    return `${dateValue}T${timeValue}`;
-                };
+            .auto-updated-indicator.is-updating {
+                animation: terminaPulse 850ms ease-out;
+            }
+        </style>
 
-                const getLocalDateTime = (dateValue, timeValue) => {
-                    const value = toDateTimeLocal(dateValue, timeValue);
-                    if (!value) {
-                        return null;
-                    }
-
-                    const parsed = new Date(value);
-                    if (Number.isNaN(parsed.getTime())) {
-                        return null;
-                    }
-                    return parsed;
-                };
-
-                const toLocalParts = (date) => {
-                    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000);
-                    const iso = local.toISOString().slice(0, 16);
-                    return iso.split('T');
-                };
-
-                const triggerEndIndicator = () => {
-                    if (!endTime) {
+        @section Scripts {
+            <script>
+                (() => {
+                    const form = document.getElementById('booking-form');
+                    if (!form) {
                         return;
                     }
 
-                    endTime.classList.remove('is-updating');
-                    // Force reflow so the animation restarts every time.
-                    void endTime.offsetWidth;
-                    endTime.classList.add('is-updating');
-                };
+                    const startHidden = form.querySelector('input[name="RequestedStart"]');
+                    const endHidden = form.querySelector('input[name="RequestedEnd"]');
+                    const startDate = document.getElementById('requested-start-date');
+                    const startTime = document.getElementById('requested-start-time');
+                    const endDate = document.getElementById('requested-end-date');
+                    const endTime = document.getElementById('requested-end-time');
+                    const durationSelect = document.getElementById('duration-hours');
+                    const scooterInput = form.querySelector('input[name="ScooterQuantity"]');
+                    const ebikeInput = form.querySelector('input[name="EbikeQuantity"]');
+                    const unitPriceLabel = document.getElementById('price-per-unit');
+                    const quantityTotalLabel = document.getElementById('quantity-total');
+                    const estimatedTotalLabel = document.getElementById('estimated-total');
+                    const endTimeHint = document.getElementById('end-time-hint');
+                    const waiverCheckbox = document.getElementById('waiver-signed-checkbox');
+                    const signatureInput = document.getElementById('electronic-signature-input');
+                    const signatureHint = document.getElementById('signature-lock-hint');
+                    const priceMap = { 1: 20, 2: 30, 3: 35, 6: 45 };
+                    const licenseValue = (form.querySelector('input[name="LicenseNumber"]')?.value || '').trim().toLowerCase();
+                    const draftStorageKey = `booking-draft:${licenseValue || 'anonymous'}`;
+                    const shouldClearDraft = @((bookingCreated is not null).ToString().ToLowerInvariant());
 
-                const applyDurationToEnd = () => {
-                    const start = getLocalDateTime(startDate?.value, startTime?.value);
-                    if (!start || !durationSelect || !endDate || !endTime) {
-                        return;
-                    }
+                    const allowedDurations = [1, 2, 3, 6];
 
-                    const durationHours = Number(durationSelect.value);
-                    const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
-                    const [computedDate, computedTime] = toLocalParts(end);
-                    endDate.value = computedDate;
-                    endTime.value = computedTime;
-                    triggerEndIndicator();
-
-                    if (endTimeHint) {
-                        endTimeHint.textContent = `Termina se ajusta automaticamente a +${durationHours} hora${durationHours === 1 ? '' : 's'} desde Inicio.`;
-                    }
-                };
-
-                const applyEndToDuration = () => {
-                    const start = getLocalDateTime(startDate?.value, startTime?.value);
-                    const end = getLocalDateTime(startDate?.value, endTime?.value);
-                    if (!start || !end || !durationSelect) {
-                        return;
-                    }
-
-                    let duration = Math.round((end.getTime() - start.getTime()) / 3600000);
-                    if (duration <= 0) {
-                        duration += 24;
-                    }
-
-                    if (!allowedDurations.includes(duration)) {
-                        const nearest = allowedDurations.reduce((best, candidate) =>
-                            Math.abs(candidate - duration) < Math.abs(best - duration) ? candidate : best
-                            , allowedDurations[0]);
-                        duration = nearest;
-                    }
-
-                    durationSelect.value = String(duration);
-                    applyDurationToEnd();
-                };
-
-                const syncHiddenFields = () => {
-                    if (startHidden) {
-                        startHidden.value = toDateTimeLocal(startDate?.value, startTime?.value);
-                    }
-
-                    if (endHidden) {
-                        endHidden.value = toDateTimeLocal(endDate?.value, endTime?.value);
-                    }
-                };
-
-                const syncEstimate = () => {
-                    const durationHours = Number(durationSelect?.value || 1);
-                    const unitPrice = priceMap[durationHours] || 20;
-                    const scooters = Math.max(0, Number(scooterInput?.value || 0));
-                    const ebikes = Math.max(0, Number(ebikeInput?.value || 0));
-                    const totalQuantity = scooters + ebikes;
-                    const estimatedTotal = unitPrice * totalQuantity;
-
-                    if (unitPriceLabel) {
-                        unitPriceLabel.textContent = `$${unitPrice.toFixed(2)}`;
-                    }
-                    if (quantityTotalLabel) {
-                        quantityTotalLabel.textContent = String(totalQuantity);
-                    }
-                    if (estimatedTotalLabel) {
-                        estimatedTotalLabel.textContent = `$${estimatedTotal.toFixed(2)}`;
-                    }
-                };
-
-                const syncSignatureLock = () => {
-                    if (!waiverCheckbox || !signatureInput) {
-                        return;
-                    }
-
-                    const enabled = waiverCheckbox.checked;
-                    signatureInput.disabled = !enabled;
-
-                    if (!enabled) {
-                        signatureInput.value = '';
-                        signatureInput.classList.add('bg-slate-100', 'text-slate-500');
-                        if (signatureHint) {
-                            signatureHint.textContent = 'Marca el relevo para habilitar la firma electronica.';
+                    const saveDraft = () => {
+                        try {
+                            const draft = {
+                                startDate: startDate?.value || '',
+                                startTime: startTime?.value || '',
+                                duration: durationSelect?.value || '1',
+                                scooters: scooterInput?.value || '1',
+                                ebikes: ebikeInput?.value || '0',
+                                waiver: waiverCheckbox?.checked || false,
+                                signature: signatureInput?.value || ''
+                            };
+                            localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+                        } catch {
+                            // Ignore storage errors (private mode, quota, etc.)
                         }
-                    } else {
-                        signatureInput.classList.remove('bg-slate-100', 'text-slate-500');
-                        if (signatureHint) {
-                            signatureHint.textContent = 'Firma electronica habilitada.';
-                        }
-                    }
-                };
+                    };
 
-                startDate?.addEventListener('change', () => {
-                    applyDurationToEnd();
-                    syncHiddenFields();
-                    syncEstimate();
-                });
-
-                startTime?.addEventListener('change', () => {
-                    applyDurationToEnd();
-                    syncHiddenFields();
-                    syncEstimate();
-                });
-
-                durationSelect?.addEventListener('change', () => {
-                    applyDurationToEnd();
-                    syncHiddenFields();
-                    syncEstimate();
-                });
-
-                [startDate, startTime, durationSelect].forEach((input) => {
-                    input?.addEventListener('keydown', (event) => {
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                        }
-                    });
-                });
-
-                document.querySelectorAll('[data-step-target]').forEach((button) => {
-                    button.addEventListener('click', () => {
-                        const targetName = button.getAttribute('data-step-target');
-                        const step = Number(button.getAttribute('data-step')) || 0;
-                        const input = form.querySelector(`input[name="${targetName}"]`);
-                        if (!input) {
+                    const loadDraft = () => {
+                        if (shouldClearDraft) {
+                            localStorage.removeItem(draftStorageKey);
                             return;
                         }
 
-                        const min = Number(input.min || 0);
-                        const max = Number(input.max || Number.MAX_SAFE_INTEGER);
-                        const current = Number(input.value || 0);
-                        const next = Math.min(max, Math.max(min, current + step));
-                        input.value = String(next);
-                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        let raw = '';
+                        try {
+                            raw = localStorage.getItem(draftStorageKey) || '';
+                        } catch {
+                            return;
+                        }
+
+                        if (!raw) {
+                            return;
+                        }
+
+                        let draft = null;
+                        try {
+                            draft = JSON.parse(raw);
+                        } catch {
+                            return;
+                        }
+
+                        if (!draft || typeof draft !== 'object') {
+                            return;
+                        }
+
+                        if (startDate && typeof draft.startDate === 'string' && draft.startDate) {
+                            startDate.value = draft.startDate;
+                        }
+                        if (startTime && typeof draft.startTime === 'string' && draft.startTime) {
+                            startTime.value = draft.startTime;
+                        }
+                        if (durationSelect && typeof draft.duration === 'string' && allowedDurations.includes(Number(draft.duration))) {
+                            durationSelect.value = draft.duration;
+                        }
+                        if (scooterInput && typeof draft.scooters === 'string') {
+                            scooterInput.value = draft.scooters;
+                        }
+                        if (ebikeInput && typeof draft.ebikes === 'string') {
+                            ebikeInput.value = draft.ebikes;
+                        }
+                        if (waiverCheckbox && typeof draft.waiver === 'boolean') {
+                            waiverCheckbox.checked = draft.waiver;
+                        }
+                        if (signatureInput && typeof draft.signature === 'string') {
+                            signatureInput.value = draft.signature;
+                        }
+                    };
+
+                    const toDateTimeLocal = (dateValue, timeValue) => {
+                        if (!dateValue || !timeValue) {
+                            return '';
+                        }
+
+                        return `${dateValue}T${timeValue}`;
+                    };
+
+                    const getLocalDateTime = (dateValue, timeValue) => {
+                        const value = toDateTimeLocal(dateValue, timeValue);
+                        if (!value) {
+                            return null;
+                        }
+
+                        const parsed = new Date(value);
+                        if (Number.isNaN(parsed.getTime())) {
+                            return null;
+                        }
+                        return parsed;
+                    };
+
+                    const toLocalParts = (date) => {
+                        const local = new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000);
+                        const iso = local.toISOString().slice(0, 16);
+                        return iso.split('T');
+                    };
+
+                    const triggerEndIndicator = () => {
+                        if (!endTime) {
+                            return;
+                        }
+
+                        endTime.classList.remove('is-updating');
+                        // Force reflow so the animation restarts every time.
+                        void endTime.offsetWidth;
+                        endTime.classList.add('is-updating');
+                    };
+
+                    const applyDurationToEnd = () => {
+                        const start = getLocalDateTime(startDate?.value, startTime?.value);
+                        if (!start || !durationSelect || !endDate || !endTime) {
+                            return;
+                        }
+
+                        const durationHours = Number(durationSelect.value);
+                        const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+                        const [computedDate, computedTime] = toLocalParts(end);
+                        endDate.value = computedDate;
+                        endTime.value = computedTime;
+                        triggerEndIndicator();
+
+                        if (endTimeHint) {
+                            endTimeHint.textContent = `El servicio termina +${durationHours} hora${durationHours === 1 ? '' : 's'} desde el período de inicio.`;
+                        }
+                    };
+
+                    const applyEndToDuration = () => {
+                        const start = getLocalDateTime(startDate?.value, startTime?.value);
+                        const end = getLocalDateTime(startDate?.value, endTime?.value);
+                        if (!start || !end || !durationSelect) {
+                            return;
+                        }
+
+                        let duration = Math.round((end.getTime() - start.getTime()) / 3600000);
+                        if (duration <= 0) {
+                            duration += 24;
+                        }
+
+                        if (!allowedDurations.includes(duration)) {
+                            const nearest = allowedDurations.reduce((best, candidate) =>
+                                Math.abs(candidate - duration) < Math.abs(best - duration) ? candidate : best
+                                , allowedDurations[0]);
+                            duration = nearest;
+                        }
+
+                        durationSelect.value = String(duration);
+                        applyDurationToEnd();
+                    };
+
+                    const syncHiddenFields = () => {
+                        if (startHidden) {
+                            startHidden.value = toDateTimeLocal(startDate?.value, startTime?.value);
+                        }
+
+                        if (endHidden) {
+                            endHidden.value = toDateTimeLocal(endDate?.value, endTime?.value);
+                        }
+                    };
+
+                    const syncEstimate = () => {
+                        const durationHours = Number(durationSelect?.value || 1);
+                        const unitPrice = priceMap[durationHours] || 20;
+                        const scooters = Math.max(0, Number(scooterInput?.value || 0));
+                        const ebikes = Math.max(0, Number(ebikeInput?.value || 0));
+                        const totalQuantity = scooters + ebikes;
+                        const estimatedTotal = unitPrice * totalQuantity;
+
+                        if (unitPriceLabel) {
+                            unitPriceLabel.textContent = `$${unitPrice.toFixed(2)}`;
+                        }
+                        if (quantityTotalLabel) {
+                            quantityTotalLabel.textContent = String(totalQuantity);
+                        }
+                        if (estimatedTotalLabel) {
+                            estimatedTotalLabel.textContent = `$${estimatedTotal.toFixed(2)}`;
+                        }
+                    };
+
+                    const syncSignatureLock = () => {
+                        if (!waiverCheckbox || !signatureInput) {
+                            return;
+                        }
+
+                        const enabled = waiverCheckbox.checked;
+                        signatureInput.disabled = !enabled;
+
+                        if (!enabled) {
+                            signatureInput.value = '';
+                            signatureInput.classList.add('bg-slate-100', 'text-slate-500');
+                            if (signatureHint) {
+                                signatureHint.textContent = 'Marca el relevo para habilitar la firma electrónica.';
+                            }
+                        } else {
+                            signatureInput.classList.remove('bg-slate-100', 'text-slate-500');
+                            if (signatureHint) {
+                                signatureHint.textContent = 'Firma electrónica habilitada.';
+                            }
+                        }
+                    };
+
+                    startDate?.addEventListener('change', () => {
+                        applyDurationToEnd();
+                        syncHiddenFields();
                         syncEstimate();
+                        saveDraft();
                     });
-                });
 
-                [scooterInput, ebikeInput].forEach((input) => {
-                    input?.addEventListener('change', syncEstimate);
-                    input?.addEventListener('input', syncEstimate);
-                });
+                    startTime?.addEventListener('change', () => {
+                        applyDurationToEnd();
+                        syncHiddenFields();
+                        syncEstimate();
+                        saveDraft();
+                    });
 
-                waiverCheckbox?.addEventListener('change', syncSignatureLock);
+                    durationSelect?.addEventListener('change', () => {
+                        applyDurationToEnd();
+                        syncHiddenFields();
+                        syncEstimate();
+                        saveDraft();
+                    });
 
-                form.addEventListener('submit', syncHiddenFields);
-                applyDurationToEnd();
-                syncHiddenFields();
-                syncEstimate();
-                syncSignatureLock();
-            })();
-        </script>
-    }
+                    [startDate, startTime, durationSelect].forEach((input) => {
+                        input?.addEventListener('keydown', (event) => {
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                            }
+                        });
+                    });
+
+                    document.querySelectorAll('[data-step-target]').forEach((button) => {
+                        button.addEventListener('click', () => {
+                            const targetName = button.getAttribute('data-step-target');
+                            const step = Number(button.getAttribute('data-step')) || 0;
+                            const input = form.querySelector(`input[name="${targetName}"]`);
+                            if (!input) {
+                                return;
+                            }
+
+                            const min = Number(input.min || 0);
+                            const max = Number(input.max || Number.MAX_SAFE_INTEGER);
+                            const current = Number(input.value || 0);
+                            const next = Math.min(max, Math.max(min, current + step));
+                            input.value = String(next);
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            syncEstimate();
+                            saveDraft();
+                        });
+                    });
+
+                    [scooterInput, ebikeInput].forEach((input) => {
+                        input?.addEventListener('change', syncEstimate);
+                        input?.addEventListener('input', syncEstimate);
+                        input?.addEventListener('change', saveDraft);
+                        input?.addEventListener('input', saveDraft);
+                    });
+
+                    waiverCheckbox?.addEventListener('change', () => {
+                        syncSignatureLock();
+                        saveDraft();
+                    });
+
+                    signatureInput?.addEventListener('input', saveDraft);
+
+                    form.addEventListener('submit', syncHiddenFields);
+                    loadDraft();
+                    applyDurationToEnd();
+                    syncHiddenFields();
+                    syncEstimate();
+                    syncSignatureLock();
+                    saveDraft();
+                })();
+            </script>
+        }
