@@ -513,6 +513,14 @@
 
                     signatureInput?.addEventListener('input', saveDraft);
 
+                    window.addEventListener('profile-license-updated', (event) => {
+                        const newLicense = event?.detail?.licenseNumber || '';
+                        const hiddenLicenseInput = form.querySelector('input[name="LicenseNumber"]');
+                        if (hiddenLicenseInput) {
+                            hiddenLicenseInput.value = newLicense;
+                        }
+                    });
+
                     form.addEventListener('submit', syncHiddenFields);
                     loadDraft();
                     applyDurationToEnd();

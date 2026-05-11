@@ -3,12 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SvelteHybridMVC.Infrastructure.Data;
 using SvelteHybridMVC.Models;
+using System.Net.Mail;
+using System.Text.RegularExpressions;
 
 namespace SvelteHybridMVC.Controllers;
 
 public class AccountsController(AppDbContext dbContext) : Controller
 {
     private const string LicenseCookieName = "sb_license";
+    private const string CustomerCodeCookieName = "sb_customer_code";
     private const string ReconfirmPrefix = "[RECONFIRM]";
 
     public async Task<IActionResult> Admin(string tab = "bookings")
@@ -135,16 +138,33 @@ public class AccountsController(AppDbContext dbContext) : Controller
     {
         await RejectExpiredPendingBookingsAsync();
 
-        var cookieLicense = Request.Cookies[LicenseCookieName];
-        var resolvedLicense = string.IsNullOrWhiteSpace(licenseNumber) ? cookieLicense : licenseNumber;
-        object? customerInfo = null;
-
-        if (!string.IsNullOrWhiteSpace(resolvedLicense))
+        Customer? currentCustomer = null;
+        if (!string.IsNullOrWhiteSpace(licenseNumber))
         {
-            var normalizedLicense = resolvedLicense.Trim().ToLowerInvariant();
+            var normalizedLicense = licenseNumber.Trim().ToLowerInvariant();
+            currentCustomer = await dbContext.Customers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(customer => customer.LicenseNumber != null && customer.LicenseNumber.ToLower() == normalizedLicense);
+        }
+        else
+        {
+            var cookieCustomerCode = Request.Cookies[CustomerCodeCookieName];
+            if (!string.IsNullOrWhiteSpace(cookieCustomerCode))
+            {
+                var normalizedCode = cookieCustomerCode.Trim().ToUpperInvariant();
+                currentCustomer = await dbContext.Customers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(customer => customer.CustomerCode.ToUpper() == normalizedCode);
+            }
+        }
+
+        object? customerInfo = null;
+        if (currentCustomer is not null)
+        {
+            var normalizedCode = currentCustomer.CustomerCode.Trim().ToUpperInvariant();
             customerInfo = await dbContext.Customers
                 .AsNoTracking()
-                .Where(customer => customer.LicenseNumber != null && customer.LicenseNumber.ToLower() == normalizedLicense)
+                .Where(customer => customer.CustomerCode.ToUpper() == normalizedCode)
                 .Select(customer => new
                 {
                     customerCode = customer.CustomerCode,
@@ -181,27 +201,25 @@ public class AccountsController(AppDbContext dbContext) : Controller
                 })
                 .FirstOrDefaultAsync();
 
-            if (customerInfo is not null)
+            Response.Cookies.Append(CustomerCodeCookieName, currentCustomer.CustomerCode, new CookieOptions
             {
-                Response.Cookies.Append(LicenseCookieName, resolvedLicense.Trim(), new CookieOptions
-                {
-                    HttpOnly = true,
-                    IsEssential = true,
-                    SameSite = SameSiteMode.Lax,
-                    Expires = DateTimeOffset.UtcNow.AddDays(30)
-                });
-            }
-            else
-            {
-                Response.Cookies.Delete(LicenseCookieName);
-            }
+                HttpOnly = true,
+                IsEssential = true,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddDays(30)
+            });
+        }
+        else
+        {
+            Response.Cookies.Delete(CustomerCodeCookieName);
+            Response.Cookies.Delete(LicenseCookieName);
         }
 
         ViewData["CustomerInfo"] = customerInfo;
 
         return View(new BookingCreateViewModel
         {
-            LicenseNumber = resolvedLicense
+            LicenseNumber = currentCustomer?.LicenseNumber ?? licenseNumber
         });
     }
 
@@ -260,7 +278,7 @@ public class AccountsController(AppDbContext dbContext) : Controller
 
         if (string.IsNullOrWhiteSpace(model.LicenseNumber))
         {
-            ModelState.AddModelError(nameof(model.LicenseNumber), "Entra tu numero de licencia para buscar tu cuenta.");
+            ModelState.AddModelError(nameof(model.LicenseNumber), "Entra tu número de licencia para buscar tu cuenta.");
         }
 
         if (!ModelState.IsValid)
@@ -278,14 +296,112 @@ public class AccountsController(AppDbContext dbContext) : Controller
             return View(model);
         }
 
-        return RedirectToAction("Create", "Bookings", new { licenseNumber = model.LicenseNumber });
+        Response.Cookies.Append(CustomerCodeCookieName, customer.CustomerCode, new CookieOptions
+        {
+            HttpOnly = true,
+            IsEssential = true,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.UtcNow.AddDays(30)
+        });
+
+        return RedirectToAction(nameof(User));
     }
 
     [HttpGet]
     public IActionResult LogoffProfile()
     {
+        Response.Cookies.Delete(CustomerCodeCookieName);
         Response.Cookies.Delete(LicenseCookieName);
         return RedirectToAction("Create", "Bookings");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.CustomerCode))
+        {
+            return BadRequest(new { message = "Codigo de cliente requerido." });
+        }
+
+        var normalizedCode = request.CustomerCode.Trim().ToUpperInvariant();
+        var customer = await dbContext.Customers
+            .FirstOrDefaultAsync(c => c.CustomerCode.ToUpper() == normalizedCode);
+
+        if (customer is null)
+        {
+            return NotFound(new { message = "No encontramos la cuenta." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.FirstName)
+            || string.IsNullOrWhiteSpace(request.LastName)
+            || string.IsNullOrWhiteSpace(request.LicenseNumber)
+            || string.IsNullOrWhiteSpace(request.City)
+            || string.IsNullOrWhiteSpace(request.Country))
+        {
+            return BadRequest(new { message = "Nombre, apellido, licencia, ciudad y pais son requeridos." });
+        }
+
+        var cleanedLicense = request.LicenseNumber.Trim();
+        var cleanedEmail = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+        var cleanedPhone = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
+
+        if (!string.IsNullOrWhiteSpace(cleanedEmail))
+        {
+            try { _ = new MailAddress(cleanedEmail); }
+            catch { return BadRequest(new { message = "Correo electronico invalido." }); }
+        }
+
+        if (!string.IsNullOrWhiteSpace(cleanedPhone))
+        {
+            if (!Regex.IsMatch(cleanedPhone, @"^\+?[0-9()\-\s]{7,20}$") || cleanedPhone.Count(char.IsDigit) is < 7 or > 15)
+            {
+                return BadRequest(new { message = "Telefono invalido." });
+            }
+        }
+
+        var normalizedNewLicense = cleanedLicense.ToLowerInvariant();
+        var licenseInUse = await dbContext.Customers
+            .AsNoTracking()
+            .AnyAsync(c => c.Id != customer.Id && c.LicenseNumber != null && c.LicenseNumber.ToLower() == normalizedNewLicense);
+        if (licenseInUse)
+        {
+            return BadRequest(new { message = "La licencia ya existe en otra cuenta." });
+        }
+
+        customer.FirstName = request.FirstName.Trim();
+        customer.LastName = request.LastName.Trim();
+        customer.LicenseNumber = cleanedLicense;
+        customer.PhoneNumber = cleanedPhone;
+        customer.Email = cleanedEmail;
+        customer.City = request.City.Trim();
+        customer.Country = request.Country.Trim();
+        customer.UpdatedAt = DateTime.UtcNow;
+
+        await dbContext.SaveChangesAsync();
+
+        return Json(new
+        {
+            customerCode = customer.CustomerCode,
+            firstName = customer.FirstName,
+            lastName = customer.LastName,
+            licenseNumber = customer.LicenseNumber,
+            phoneNumber = customer.PhoneNumber,
+            email = customer.Email,
+            city = customer.City,
+            country = customer.Country
+        });
+    }
+
+    public sealed class UpdateProfileRequest
+    {
+        public string? CustomerCode { get; set; }
+        public string? LicenseNumber { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Email { get; set; }
+        public string? City { get; set; }
+        public string? Country { get; set; }
     }
 
     private static string NormalizeStatus(string? status)
@@ -383,6 +499,7 @@ public class AccountsController(AppDbContext dbContext) : Controller
             && bytes[7] == 0x0A;
     }
 }
+
 
 
 

@@ -8,7 +8,7 @@ namespace SvelteHybridMVC.Controllers;
 public class BookingsController : Controller
 {
     private readonly AppDbContext _dbContext;
-    private const string LicenseCookieName = "sb_license";
+    private const string CustomerCodeCookieName = "sb_customer_code";
     private const string ReconfirmPrefix = "[RECONFIRM]";
     private static readonly Dictionary<int, decimal> DurationPricing = new()
     {
@@ -26,20 +26,15 @@ public class BookingsController : Controller
     [HttpGet]
     public IActionResult Create(string? licenseNumber = null)
     {
-        var savedLicense = Request.Cookies[LicenseCookieName];
-        var resolvedLicense = string.IsNullOrWhiteSpace(licenseNumber) ? savedLicense : licenseNumber;
-
-        if (!string.IsNullOrWhiteSpace(resolvedLicense))
+        if (!string.IsNullOrWhiteSpace(licenseNumber))
         {
-            Response.Cookies.Append(LicenseCookieName, resolvedLicense.Trim(), new CookieOptions
-            {
-                HttpOnly = true,
-                IsEssential = true,
-                SameSite = SameSiteMode.Lax,
-                Expires = DateTimeOffset.UtcNow.AddDays(30)
-            });
+            return RedirectToAction("User", "Accounts", new { licenseNumber = licenseNumber.Trim() });
+        }
 
-            return RedirectToAction("User", "Accounts", new { licenseNumber = resolvedLicense.Trim() });
+        var savedCustomerCode = Request.Cookies[CustomerCodeCookieName];
+        if (!string.IsNullOrWhiteSpace(savedCustomerCode))
+        {
+            return RedirectToAction("User", "Accounts");
         }
 
         return View(new UserAuthViewModel
@@ -132,7 +127,7 @@ public class BookingsController : Controller
 
         if (!isReservationRequest)
         {
-            Response.Cookies.Append(LicenseCookieName, model.LicenseNumber.Trim(), new CookieOptions
+            Response.Cookies.Append(CustomerCodeCookieName, customer.CustomerCode, new CookieOptions
             {
                 HttpOnly = true,
                 IsEssential = true,
@@ -140,7 +135,7 @@ public class BookingsController : Controller
                 Expires = DateTimeOffset.UtcNow.AddDays(30)
             });
 
-            return RedirectToAction("User", "Accounts", new { licenseNumber = model.LicenseNumber });
+            return RedirectToAction("User", "Accounts");
         }
 
         var totalQuantity = model.ScooterQuantity + model.EbikeQuantity;
@@ -233,7 +228,7 @@ public class BookingsController : Controller
         await _dbContext.SaveChangesAsync();
 
         TempData["BookingCreated"] = "Reserva solicitada. Revisaremos los detalles y la aprobaremos pronto.";
-        return RedirectToAction("User", "Accounts", new { licenseNumber = model.LicenseNumber });
+        return RedirectToAction("User", "Accounts");
     }
 
     [HttpGet]
@@ -350,9 +345,9 @@ public class BookingsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> DeleteOwn(long id, string? licenseNumber = null)
+    public async Task<IActionResult> DeleteOwn(long id, string? customerCode = null)
     {
-        var booking = await FindOwnedBookingAsync(id, licenseNumber);
+        var booking = await FindOwnedBookingAsync(id, customerCode);
         if (booking is null)
         {
             return NotFound();
@@ -361,20 +356,20 @@ public class BookingsController : Controller
         if (booking.Status != "pending" && booking.Status != "rejected")
         {
             TempData["BookingRejectedError"] = "Esa reserva ya no se puede eliminar.";
-            return RedirectToAction("User", "Accounts", new { licenseNumber = ResolveLicense(licenseNumber) });
+            return RedirectToAction("User", "Accounts");
         }
 
         booking.Status = "cancelled";
         booking.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync();
         TempData["BookingCreated"] = "Tu reserva fue eliminada.";
-        return RedirectToAction("User", "Accounts", new { licenseNumber = ResolveLicense(licenseNumber) });
+        return RedirectToAction("User", "Accounts");
     }
 
     [HttpGet]
-    public async Task<IActionResult> RespondReconfirm(long id, bool accept, string? licenseNumber = null)
+    public async Task<IActionResult> RespondReconfirm(long id, bool accept, string? customerCode = null)
     {
-        var booking = await FindOwnedBookingAsync(id, licenseNumber);
+        var booking = await FindOwnedBookingAsync(id, customerCode);
         if (booking is null)
         {
             return NotFound();
@@ -383,7 +378,7 @@ public class BookingsController : Controller
         if (string.IsNullOrWhiteSpace(booking.AdminNotes) || !booking.AdminNotes.StartsWith(ReconfirmPrefix))
         {
             TempData["BookingRejectedError"] = "Esta reserva no tiene una re-confirmacion pendiente.";
-            return RedirectToAction("User", "Accounts", new { licenseNumber = ResolveLicense(licenseNumber) });
+            return RedirectToAction("User", "Accounts");
         }
 
         if (accept)
@@ -401,7 +396,7 @@ public class BookingsController : Controller
 
         booking.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync();
-        return RedirectToAction("User", "Accounts", new { licenseNumber = ResolveLicense(licenseNumber) });
+        return RedirectToAction("User", "Accounts");
     }
 
     private static DateTime ToUtc(DateTime value)
@@ -443,25 +438,24 @@ public class BookingsController : Controller
         }
     }
 
-    private string? ResolveLicense(string? licenseNumber)
+    private string? ResolveCustomerCode(string? customerCode)
     {
-        return string.IsNullOrWhiteSpace(licenseNumber) ? Request.Cookies[LicenseCookieName] : licenseNumber;
+        return string.IsNullOrWhiteSpace(customerCode) ? Request.Cookies[CustomerCodeCookieName] : customerCode;
     }
 
-    private async Task<Booking?> FindOwnedBookingAsync(long id, string? licenseNumber)
+    private async Task<Booking?> FindOwnedBookingAsync(long id, string? customerCode)
     {
-        var resolvedLicense = ResolveLicense(licenseNumber);
-        if (string.IsNullOrWhiteSpace(resolvedLicense))
+        var resolvedCustomerCode = ResolveCustomerCode(customerCode);
+        if (string.IsNullOrWhiteSpace(resolvedCustomerCode))
         {
             return null;
         }
 
-        var normalized = resolvedLicense.Trim().ToLowerInvariant();
+        var normalized = resolvedCustomerCode.Trim().ToUpperInvariant();
         return await _dbContext.Bookings
             .Include(booking => booking.Customer)
             .FirstOrDefaultAsync(booking => booking.Id == id
                 && booking.Customer != null
-                && booking.Customer.LicenseNumber != null
-                && booking.Customer.LicenseNumber.ToLower() == normalized);
+                && booking.Customer.CustomerCode.ToUpper() == normalized);
     }
 }
