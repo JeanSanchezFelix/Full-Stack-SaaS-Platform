@@ -24,6 +24,18 @@
         customer = customerInfo,
         licenseNumber = Model?.LicenseNumber
     });
+    var requestButtonProps = JsonSerializer.Serialize(new
+    {
+        label = "Solicitar reserva",
+        type = "submit",
+        variant = "primary"
+    });
+    var cancelButtonProps = JsonSerializer.Serialize(new
+    {
+        label = "Cancelar",
+        href = Url.Action("Index", "Home"),
+        variant = "secondary"
+    });
 }
 
 <section class="mx-auto max-w-4xl">
@@ -182,14 +194,8 @@
                 </div>
 
                 <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
-                    <button type="submit" data-submit-label
-                            class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
-                        Solicitar reserva
-                    </button>
-                    <a asp-controller="Home" asp-action="Index"
-                           class="rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-                        Cancelar
-                    </a>
+                    <div data-svelte-component="ActionButton" data-props='@requestButtonProps'></div>
+                    <div data-svelte-component="ActionButton" data-props='@cancelButtonProps'></div>
                 </div>
             </form>
         </section>
@@ -531,3 +537,7 @@
                 })();
             </script>
         }
+
+
+
+

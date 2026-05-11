@@ -180,10 +180,10 @@
           <p class="md:col-span-2 text-xs text-red-600">{saveError}</p>
         {/if}
         <div class="md:col-span-2 flex gap-2">
-          <button type="button" class="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60" onclick={saveProfile} disabled={isSaving}>
+          <button type="button" class="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 hover:bg-slate-800" onclick={saveProfile} disabled={isSaving}>
             {isSaving ? "Guardando..." : "Guardar cambios"}
           </button>
-          <button type="button" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700" onclick={cancelEdit}>
+          <button type="button" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100" onclick={cancelEdit}>
             Cancelar
           </button>
         </div>
@@ -195,15 +195,15 @@
           <dd class="mt-1 text-slate-600">{profile.licenseNumber || "No registrada"}</dd>
         </div>
         <div>
-          <dt class="font-semibold text-slate-800">Telefono</dt>
+          <dt class="font-semibold text-slate-800">Teléfono</dt>
           <dd class="mt-1 text-slate-600">{profile.phoneNumber || "No registrado"}</dd>
         </div>
         <div>
-          <dt class="font-semibold text-slate-800">Correo electronico</dt>
+          <dt class="font-semibold text-slate-800">Correo electrónico</dt>
           <dd class="mt-1 break-words text-slate-600">{profile.email || "No registrado"}</dd>
         </div>
         <div>
-          <dt class="font-semibold text-slate-800">Ubicacion</dt>
+          <dt class="font-semibold text-slate-800">Ubicación</dt>
           <dd class="mt-1 text-slate-600">{location || "No registrada"}</dd>
         </div>
         <div>
@@ -217,8 +217,8 @@
       <p class="text-sm font-semibold text-slate-900">No hay cuenta cargada</p>
       <p class="mt-1 text-sm text-slate-600">
         {licenseNumber
-          ? `No encontramos informacion para la licencia ${licenseNumber}.`
-          : "Busca tu licencia en Reserva para cargar tu informacion antes de completar la reserva."}
+          ? `No encontramos información para la licencia ${licenseNumber}.`
+          : "Busca tu licencia en Reserva para cargar tu información antes de completar la reserva."}
       </p>
     </div>
   {/if}
@@ -242,9 +242,9 @@
             <thead class="bg-slate-50 text-left text-slate-600">
               <tr>
                 <th class="px-3 py-2 font-semibold">Fecha</th>
-                <th class="px-3 py-2 font-semibold">Inicio</th>
-                <th class="px-3 py-2 font-semibold">Termina</th>
-                <th class="px-3 py-2 font-semibold">Duracion</th>
+                <th class="px-3 py-2 font-semibold">Comienza</th>
+                <th class="px-3 py-2 font-semibold">Concluye</th>
+                <th class="px-3 py-2 font-semibold">Duración</th>
                 <th class="px-3 py-2 font-semibold">Scooters</th>
                 <th class="px-3 py-2 font-semibold">E-bikes</th>
                 <th class="px-3 py-2 font-semibold">Estado</th>

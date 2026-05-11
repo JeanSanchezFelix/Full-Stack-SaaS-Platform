@@ -110,12 +110,14 @@
     if (formatted !== prev) {
       const caret = input.selectionStart ?? prev.length;
       const digitsBeforeCaret = prev.slice(0, caret).replace(/\D/g, '').length;
+      const isLocalShorthand = !prev.trimStart().startsWith('+') && prev.replace(/\D/g, '').length <= 10;
+      const targetDigitIndex = digitsBeforeCaret + (isLocalShorthand ? 1 : 0);
       input.value = formatted;
       let d = 0;
       let newCaret = 0;
       for (let i = 0; i < formatted.length; i++) {
         if (/\d/.test(formatted[i])) d++;
-        if (d === digitsBeforeCaret) {
+        if (d === targetDigitIndex) {
           newCaret = i + 1;
           break;
         }

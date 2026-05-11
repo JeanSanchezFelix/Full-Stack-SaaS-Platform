@@ -2,12 +2,14 @@ import { mountCustomerIntakeEnhancer } from './CustomerIntakeEnhancer.js';
 import { mountBookingLookupEnhancer } from './BookingLookupEnhancer.js';
 import { mountUserInfoDisplay } from './UserInfoDisplay.js';
 import { mountTextEntryField } from './TextEntryField.js';
+import { mountActionButton } from './ActionButton.js';
 
 const componentMounts = {
   CustomerIntakeEnhancer: mountCustomerIntakeEnhancer,
   BookingLookupEnhancer: mountBookingLookupEnhancer,
   UserInfoDisplay: mountUserInfoDisplay,
-  TextEntryField: mountTextEntryField
+  TextEntryField: mountTextEntryField,
+  ActionButton: mountActionButton
 };
 
 function parseProps(element) {

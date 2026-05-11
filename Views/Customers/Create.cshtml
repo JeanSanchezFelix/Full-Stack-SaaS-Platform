@@ -37,6 +37,23 @@
             wrapperClass = wrapperClass ?? string.Empty
         });
     }
+
+    string ButtonProps(
+        string label,
+        string? href = null,
+        string type = "button",
+        string variant = "primary",
+        string? extraClass = null)
+    {
+        return JsonSerializer.Serialize(new
+        {
+            label,
+            href = href ?? string.Empty,
+            type,
+            variant,
+            extraClass = extraClass ?? string.Empty
+        });
+    }
 }
 <section class="mx-auto max-w-4xl">
     <div class="mb-8">
@@ -100,15 +117,8 @@
             </label>
         </div>
         <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
-            <button type="submit" class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
-                Finalizar registro
-            </button>
-            <a
-                asp-controller="Home"
-                asp-action="Index"
-                class="rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-                Cancelar
-            </a>
+            <div data-svelte-component="ActionButton" data-props='@ButtonProps("Finalizar registro", type: "submit", variant: "primary")'></div>
+            <div data-svelte-component="ActionButton" data-props='@ButtonProps("Cancelar", href: Url.Action("Index", "Home"), variant: "secondary")'></div>
         </div>
     </form>
 </section>
@@ -121,7 +131,7 @@
         if (!form) return {};
         const formData = {};
         Array.from(form.elements).forEach(input => {
-            if (!input?.name || input.name === 'ElectronicSignature') {
+            if (!input?.name || input.name === 'ElectronicSignature' || input.name === 'LiabilityWaiverSigned') {
                 return;
             }
             if (input.type === 'hidden' && !input.name.startsWith('__')) {
@@ -153,6 +163,10 @@
         try {
             const data = JSON.parse(savedData);
             Object.keys(data).forEach(key => {
+                if (key === 'LiabilityWaiverSigned') {
+                    return;
+                }
+
                 const checkboxInput = form.querySelector(`input[name="${key}"][type="checkbox"]`);
                 if (checkboxInput) {
                     checkboxInput.checked = Boolean(data[key]);
@@ -319,6 +333,10 @@
 
     syncSignatureLock();
 </script>
+
+
+
+
 
 
 

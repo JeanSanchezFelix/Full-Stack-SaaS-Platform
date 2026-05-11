@@ -1,6 +1,19 @@
+@using System.Text.Json
 @{
     ViewData["Title"] = "Relevo de Responsabilidad";
     var returnUrl = ViewData["ReturnUrl"] as string ?? Url.Action("Create", "Customers")!;
+    var backButtonProps = JsonSerializer.Serialize(new
+    {
+        label = "Volver al Formulario",
+        href = returnUrl,
+        variant = "primary"
+    });
+    var homeButtonProps = JsonSerializer.Serialize(new
+    {
+        label = "Ir al Inicio",
+        href = Url.Action("Index", "Home"),
+        variant = "secondary"
+    });
 }
 <section class="mx-auto max-w-4xl py-8">
     <div class="mb-8">
@@ -73,13 +86,7 @@
                         <p class="mt-8 font-semibold text-slate-900">Última actualización: Mayo 2026</p>
                     </div>
                     <div class="mt-8 flex items-center gap-3 border-t border-slate-200 pt-6">
-                        <a href="@returnUrl"
-                               class="rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
-                            Volver al Formulario
-                        </a>
-                        <a asp-controller="Home" asp-action="Index"
-                               class="rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-                            Ir al Inicio
-                        </a>
+                        <div data-svelte-component="ActionButton" data-props='@backButtonProps'></div>
+                        <div data-svelte-component="ActionButton" data-props='@homeButtonProps'></div>
                     </div>
                 </section>
