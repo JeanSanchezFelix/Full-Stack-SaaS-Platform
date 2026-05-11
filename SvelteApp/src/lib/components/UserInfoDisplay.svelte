@@ -25,6 +25,29 @@
       timeStyle: "short",
     }).format(new Date(value));
   }
+
+  function clearPersistedProfileState() {
+    try {
+      const keysToDelete = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        if (key === "customer-intake-form" || key.startsWith("booking-draft:")) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach((key) => localStorage.removeItem(key));
+      sessionStorage.removeItem("customer-intake-form");
+    } catch {
+      // Ignore storage access issues.
+    }
+  }
+
+  function handleLogoffClick(event) {
+    event.preventDefault();
+    clearPersistedProfileState();
+    window.location.href = "/Accounts/LogoffProfile";
+  }
 </script>
 
 <aside class="mb-6 rounded-md border border-slate-200 bg-slate-50 px-4 py-4">
@@ -45,13 +68,22 @@
         </div>
       </div>
 
-      <button
-        type="button"
-        class="w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100"
-        onclick={() => (showBookings = true)}
-      >
-        Ver Reservas ({customer.bookings?.length || 0})
-      </button>
+      <div class="flex flex-col items-end gap-2">
+        <button
+          type="button"
+          class="w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100"
+          onclick={() => (showBookings = true)}
+        >
+          Ver Reservas ({customer.bookings?.length || 0})
+        </button>
+        <a
+          href="/Accounts/LogoffProfile"
+          class="w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100"
+          onclick={handleLogoffClick}
+        >
+          Cerrar perfil
+        </a>
+      </div>
     </div>
 
     <dl

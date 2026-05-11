@@ -12,10 +12,9 @@ public class Customer
     public string City { get; set; } = string.Empty;
     public string Country { get; set; } = string.Empty;
     public string? HowDidYouHear { get; set; }
-    public string? Observations { get; set; }
     public bool LiabilityWaiverSigned { get; set; }
     public DateTime? LiabilityWaiverSignedAt { get; set; }
-    public string? ElectronicSignature { get; set; }
+    public byte[]? ElectronicSignature { get; set; }
     public bool AuthorizeRecontact { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

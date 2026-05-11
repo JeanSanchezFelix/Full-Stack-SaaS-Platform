@@ -201,6 +201,7 @@ public class BookingsController : Controller
         var requestedStartUtc = ToUtc(model.RequestedStart);
         DateTime? requestedEndUtc = model.RequestedEnd.HasValue ? ToUtc(model.RequestedEnd.Value) : null;
         var signature = NormalizeOptional(model.ElectronicSignature);
+        var signatureBytes = DecodeSignaturePngOrNull(signature);
 
         _dbContext.Bookings.Add(new Booking
         {
@@ -222,7 +223,10 @@ public class BookingsController : Controller
         {
             customer.LiabilityWaiverSigned = true;
             customer.LiabilityWaiverSignedAt = customer.LiabilityWaiverSignedAt ?? DateTime.UtcNow;
-            customer.ElectronicSignature = signature;
+            if (signatureBytes is { Length: > 0 })
+            {
+                customer.ElectronicSignature = signatureBytes;
+            }
             customer.UpdatedAt = DateTime.UtcNow;
         }
 
@@ -413,6 +417,30 @@ public class BookingsController : Controller
     private static string? NormalizeOptional(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static byte[]? DecodeSignaturePngOrNull(string? signature)
+    {
+        if (string.IsNullOrWhiteSpace(signature))
+        {
+            return null;
+        }
+
+        const string prefix = "data:image/png;base64,";
+        if (!signature.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        try
+        {
+            var decoded = Convert.FromBase64String(signature[prefix.Length..]);
+            return decoded.Length > 0 ? decoded : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private string? ResolveLicense(string? licenseNumber)

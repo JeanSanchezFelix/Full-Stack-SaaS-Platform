@@ -23,7 +23,6 @@ public class CustomerIntakeViewModel
     [Display(Name = "Numero de telefono")]
     public string PhoneNumber { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El correo electronico es requerido.")]
     [EmailAddress(ErrorMessage = "Entra un correo electronico valido.")]
     [Display(Name = "Correo electronico")]
     public string? Email { get; set; }
@@ -38,9 +37,6 @@ public class CustomerIntakeViewModel
 
     [Display(Name = "Como supiste de nosotros?")]
     public string? HowDidYouHear { get; set; }
-
-    [Display(Name = "Comentarios adicionales")]
-    public string? Observations { get; set; }
 
     [Display(Name = "He leido y acepto el relevo de responsabilidad.")]
     public bool LiabilityWaiverSigned { get; set; }

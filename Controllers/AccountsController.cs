@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SvelteHybridMVC.Infrastructure.Data;
@@ -49,7 +50,6 @@ public class AccountsController(AppDbContext dbContext) : Controller
                 LiabilityWaiverSigned = customer.LiabilityWaiverSigned,
                 ElectronicSignature = customer.ElectronicSignature,
                 HowDidYouHear = customer.HowDidYouHear,
-                Observations = customer.Observations,
                 AuthorizeRecontact = customer.AuthorizeRecontact,
                 CreatedAt = customer.CreatedAt
             })
@@ -72,34 +72,63 @@ public class AccountsController(AppDbContext dbContext) : Controller
             .ThenBy(customer => customer.FirstName)
             .ToListAsync();
 
-        var lines = new List<string>
+        using var workbook = new XLWorkbook();
+        var ws = workbook.Worksheets.Add("Clientes");
+        ws.Cell(1, 1).Value = "Id";
+        ws.Cell(1, 2).Value = "Código de cliente";
+        ws.Cell(1, 3).Value = "Nombre";
+        ws.Cell(1, 4).Value = "Número de licencia";
+        ws.Cell(1, 5).Value = "Número de teléfono";
+        ws.Cell(1, 6).Value = "Email";
+        ws.Cell(1, 7).Value = "Pueblo";
+        ws.Cell(1, 8).Value = "País";
+        ws.Cell(1, 9).Value = "Firma electrónica";
+        ws.Cell(1, 10).Value = "¿Cómo escuchaste de nosotros?";
+        ws.Cell(1, 11).Value = "Autoriza recontacto";
+        ws.Cell(1, 12).Value = "Cuenta creada en";
+
+        ws.Row(1).Style.Font.Bold = true;
+        ws.SheetView.FreezeRows(1);
+
+        var row = 2;
+        foreach (var customer in customers)
         {
-            "Id,CustomerCode,FirstName,LastName,LicenseNumber,PhoneNumber,Email,City,Country,LiabilityWaiverSigned,ElectronicSignature,HowDidYouHear,Observations,AuthorizeRecontact,CreatedAtUtc"
-        };
+            ws.Cell(row, 1).Value = customer.Id;
+            ws.Cell(row, 2).Value = customer.CustomerCode;
+            ws.Cell(row, 3).Value = customer.FirstName + " " + customer.LastName;
+            ws.Cell(row, 4).Value = customer.LicenseNumber;
+            ws.Cell(row, 5).Value = customer.PhoneNumber;
+            ws.Cell(row, 6).Value = customer.Email ?? string.Empty;
+            ws.Cell(row, 7).Value = customer.City;
+            ws.Cell(row, 8).Value = customer.Country;
+            ws.Cell(row, 9).Value = string.Empty;
+            ws.Cell(row, 10).Value = customer.HowDidYouHear ?? string.Empty;
+            ws.Cell(row, 11).Value = customer.AuthorizeRecontact ? "Sí" : "No";
+            ws.Cell(row, 12).Value = customer.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
 
-        lines.AddRange(customers.Select(customer =>
-            string.Join(",", new[]
+            if (TryGetSignaturePngBytes(customer.ElectronicSignature, out var signatureBytes))
             {
-                customer.Id.ToString(),
-                EscapeCsv(customer.CustomerCode),
-                EscapeCsv(customer.FirstName),
-                EscapeCsv(customer.LastName),
-                EscapeCsv(customer.LicenseNumber),
-                EscapeCsv(customer.PhoneNumber),
-                EscapeCsv(customer.Email),
-                EscapeCsv(customer.City),
-                EscapeCsv(customer.Country),
-                customer.LiabilityWaiverSigned ? "true" : "false",
-                EscapeCsv(customer.ElectronicSignature),
-                EscapeCsv(customer.HowDidYouHear),
-                EscapeCsv(customer.Observations),
-                customer.AuthorizeRecontact ? "true" : "false",
-                customer.CreatedAt.ToUniversalTime().ToString("O")
-            })));
+                using var signatureStream = new MemoryStream(signatureBytes);
+                var picture = ws.AddPicture(signatureStream, $"signature-{customer.Id}");
+                picture.MoveTo(ws.Cell(row, 9), 4, 4);
+                picture.WithSize(180, 56);
+                ws.Row(row).Height = 46;
+            }
 
-        var csv = string.Join(Environment.NewLine, lines);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
-        return File(bytes, "text/csv", $"clientes-{DateTime.UtcNow:yyyyMMdd-HHmmss}.csv");
+            row++;
+        }
+
+        ws.Columns(1, 8).AdjustToContents();
+        ws.Column(9).Width = 28;
+        ws.Columns(10, 12).AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Position = 0;
+        return File(
+            stream.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"clientes-{DateTime.UtcNow:yyyyMMdd-HHmmss}.xlsx");
     }
 
     public new async Task<IActionResult> User(string? licenseNumber = null)
@@ -252,15 +281,11 @@ public class AccountsController(AppDbContext dbContext) : Controller
         return RedirectToAction("Create", "Bookings", new { licenseNumber = model.LicenseNumber });
     }
 
-    private static string EscapeCsv(string? value)
+    [HttpGet]
+    public IActionResult LogoffProfile()
     {
-        var safe = value ?? string.Empty;
-        if (safe.Contains(',') || safe.Contains('"') || safe.Contains('\n') || safe.Contains('\r'))
-        {
-            return $"\"{safe.Replace("\"", "\"\"")}\"";
-        }
-
-        return safe;
+        Response.Cookies.Delete(LicenseCookieName);
+        return RedirectToAction("Create", "Bookings");
     }
 
     private static string NormalizeStatus(string? status)
@@ -301,7 +326,65 @@ public class AccountsController(AppDbContext dbContext) : Controller
 
         await dbContext.SaveChangesAsync();
     }
+
+    private static bool TryGetSignaturePngBytes(byte[]? signature, out byte[] pngBytes)
+    {
+        pngBytes = [];
+        if (signature is not { Length: > 0 })
+        {
+            return false;
+        }
+
+        if (IsPng(signature))
+        {
+            pngBytes = signature;
+            return true;
+        }
+
+        // Backward compatibility: some rows may still contain UTF-8 data URL bytes.
+        try
+        {
+            var asText = System.Text.Encoding.UTF8.GetString(signature);
+            const string prefix = "data:image/png;base64,";
+            if (!asText.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var decoded = Convert.FromBase64String(asText[prefix.Length..]);
+            if (!IsPng(decoded))
+            {
+                return false;
+            }
+
+            pngBytes = decoded;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsPng(byte[] bytes)
+    {
+        if (bytes.Length < 8)
+        {
+            return false;
+        }
+
+        return bytes[0] == 0x89
+            && bytes[1] == 0x50
+            && bytes[2] == 0x4E
+            && bytes[3] == 0x47
+            && bytes[4] == 0x0D
+            && bytes[5] == 0x0A
+            && bytes[6] == 0x1A
+            && bytes[7] == 0x0A;
+    }
 }
+
+
 
 
 

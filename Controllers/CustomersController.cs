@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using SvelteHybridMVC.Infrastructure.Data;
 using SvelteHybridMVC.Models;
 using System.Net.Mail;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace SvelteHybridMVC.Controllers;
@@ -11,8 +10,7 @@ namespace SvelteHybridMVC.Controllers;
 public class CustomersController : Controller
 {
     private readonly AppDbContext _dbContext;
-    private const string CustomerDraftTempDataKey = "CustomerCreateDraft";
-    private const string CustomerDraftErrorsTempDataKey = "CustomerCreateDraftErrors";
+    private const string TempDataCookieName = ".AspNetCore.Mvc.CookieTempDataProvider";
 
     public CustomersController(AppDbContext dbContext)
     {
@@ -22,20 +20,8 @@ public class CustomersController : Controller
     [HttpGet]
     public IActionResult Create(string? returnUrl = null, string? licenseNumber = null)
     {
-        if (TempData[CustomerDraftErrorsTempDataKey] is string errorsJson)
-        {
-            var errors = JsonSerializer.Deserialize<List<string>>(errorsJson) ?? [];
-            ViewData["DraftErrors"] = errors;
-        }
-
-        if (TempData[CustomerDraftTempDataKey] is string draftJson)
-        {
-            var draft = JsonSerializer.Deserialize<CustomerIntakeViewModel>(draftJson);
-            if (draft is not null)
-            {
-                return View(draft);
-            }
-        }
+        // Clear stale oversized temp-data cookie payloads that can cause HTTP 431.
+        Response.Cookies.Delete(TempDataCookieName);
 
         return View(new CustomerIntakeViewModel
         {
@@ -80,9 +66,9 @@ public class CustomersController : Controller
         {
             ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electronica es requerida para guardar su informacion.");
         }
-        else if (!IsValidElectronicSignature(model.ElectronicSignature))
+        else if (!TryDecodeSignaturePng(model.ElectronicSignature, out _))
         {
-            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electronica debe contener su nombre.");
+            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electronica no es valida.");
         }
 
         if (!model.LiabilityWaiverSigned)
@@ -102,20 +88,7 @@ public class CustomersController : Controller
 
         if (!ModelState.IsValid)
         {
-            var errors = ModelState.Values
-                .SelectMany(state => state.Errors)
-                .Select(error => error.ErrorMessage)
-                .Where(message => !string.IsNullOrWhiteSpace(message))
-                .Distinct()
-                .ToList();
-
-            TempData[CustomerDraftTempDataKey] = JsonSerializer.Serialize(model);
-            TempData[CustomerDraftErrorsTempDataKey] = JsonSerializer.Serialize(errors);
-            return RedirectToAction(nameof(Create), new
-            {
-                returnUrl = model.ReturnUrl,
-                licenseNumber = model.LicenseNumber
-            });
+            return View(model);
         }
 
         var customer = new Customer
@@ -129,10 +102,9 @@ public class CustomersController : Controller
             City = model.City.Trim(),
             Country = model.Country.Trim(),
             HowDidYouHear = NormalizeOptional(model.HowDidYouHear),
-            Observations = NormalizeOptional(model.Observations),
             LiabilityWaiverSigned = model.LiabilityWaiverSigned,
             LiabilityWaiverSignedAt = model.LiabilityWaiverSigned ? DateTime.UtcNow : null,
-            ElectronicSignature = NormalizeOptional(model.ElectronicSignature),
+            ElectronicSignature = DecodeSignaturePngOrNull(model.ElectronicSignature),
             AuthorizeRecontact = model.AuthorizeRecontact,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -148,7 +120,7 @@ public class CustomersController : Controller
             return Redirect($"{model.ReturnUrl}?licenseNumber={Uri.EscapeDataString(customer.LicenseNumber ?? string.Empty)}");
         }
 
-        return RedirectToAction(nameof(Create));
+        return RedirectToAction("User", "Accounts", new { licenseNumber = customer.LicenseNumber });
     }
 
     private async Task<string> GenerateCustomerCodeAsync(string firstName, string lastName)
@@ -236,14 +208,35 @@ public class CustomersController : Controller
         return digits.Length > 0 ? $"+{digits}" : phone.Trim();
     }
 
-    private static bool IsValidElectronicSignature(string signature)
+    private static byte[]? DecodeSignaturePngOrNull(string? signature)
     {
-        var normalized = signature.Trim();
-        if (normalized.Length < 2)
+        return TryDecodeSignaturePng(signature, out var bytes) ? bytes : null;
+    }
+
+    private static bool TryDecodeSignaturePng(string? signature, out byte[] bytes)
+    {
+        bytes = [];
+        if (string.IsNullOrWhiteSpace(signature))
         {
             return false;
         }
 
-        return normalized.Any(char.IsLetter);
+        var normalized = signature.Trim();
+        const string prefix = "data:image/png;base64,";
+        if (!normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        try
+        {
+            bytes = Convert.FromBase64String(normalized[prefix.Length..]);
+            return bytes.Length >= 128 && bytes.Length <= 750_000;
+        }
+        catch
+        {
+            bytes = [];
+            return false;
+        }
     }
 }

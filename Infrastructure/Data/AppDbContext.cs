@@ -29,10 +29,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(customer => customer.City).HasColumnName("city");
             entity.Property(customer => customer.Country).HasColumnName("country");
             entity.Property(customer => customer.HowDidYouHear).HasColumnName("how_did_you_hear");
-            entity.Property(customer => customer.Observations).HasColumnName("observations");
             entity.Property(customer => customer.LiabilityWaiverSigned).HasColumnName("liability_waiver_signed");
             entity.Property(customer => customer.LiabilityWaiverSignedAt).HasColumnName("liability_waiver_signed_at");
-            entity.Property(customer => customer.ElectronicSignature).HasColumnName("electronic_signature");
+            entity.Property(customer => customer.ElectronicSignature).HasColumnName("electronic_signature").HasColumnType("bytea");
             entity.Property(customer => customer.AuthorizeRecontact).HasColumnName("authorize_recontact");
             entity.Property(customer => customer.CreatedAt).HasColumnName("created_at");
             entity.Property(customer => customer.UpdatedAt).HasColumnName("updated_at");

@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableSvelteHybrid>true</EnableSvelteHybrid>
     <SvelteOutputPath>wwwroot/_svelte</SvelteOutputPath>
-    <SvelteBuildMode>Parallel</SvelteBuildMode>
+    <SvelteBuildMode>Sequential</SvelteBuildMode>
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <UserSecretsId>87e5ed73-a40b-4383-9ec4-0aa28b10b959</UserSecretsId>
   </PropertyGroup>
@@ -17,6 +17,7 @@
     <PackageReference Include="JavaScriptEngineSwitcher.Jint" Version="3.25.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
   </ItemGroup>
 
   <!-- Hybrid Svelte files -->

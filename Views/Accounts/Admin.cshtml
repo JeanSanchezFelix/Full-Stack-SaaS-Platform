@@ -2,6 +2,42 @@
 
 @{
     ViewData["Title"] = "Panel de Administración";
+    static bool IsPng(byte[] bytes)
+    {
+        if (bytes.Length < 8) return false;
+        return bytes[0] == 0x89
+            && bytes[1] == 0x50
+            && bytes[2] == 0x4E
+            && bytes[3] == 0x47
+            && bytes[4] == 0x0D
+            && bytes[5] == 0x0A
+            && bytes[6] == 0x1A
+            && bytes[7] == 0x0A;
+    }
+
+    static string? BuildSignatureImageSrc(byte[]? signature)
+    {
+        if (signature is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        if (IsPng(signature))
+        {
+            return $"data:image/png;base64,{Convert.ToBase64String(signature)}";
+        }
+
+        try
+        {
+            var asText = System.Text.Encoding.UTF8.GetString(signature);
+            const string prefix = "data:image/png;base64,";
+            return asText.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? asText : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
 
 <section class="mx-auto max-w-6xl">
@@ -51,16 +87,14 @@
             <table class="min-w-full divide-y divide-slate-200 text-sm">
                 <thead class="bg-slate-50 text-left text-slate-600">
                     <tr>
-                        <th class="px-4 py-3 font-semibold">Codigo</th>
+                        <th class="px-4 py-3 font-semibold">Código</th>
                         <th class="px-4 py-3 font-semibold">Nombre</th>
                         <th class="px-4 py-3 font-semibold">Licencia</th>
-                        <th class="px-4 py-3 font-semibold">Telefono</th>
+                        <th class="px-4 py-3 font-semibold">Teléfono</th>
                         <th class="px-4 py-3 font-semibold">Email</th>
-                        <th class="px-4 py-3 font-semibold">Ciudad/Pais</th>
-                        <th class="px-4 py-3 font-semibold">Waiver</th>
+                        <th class="px-4 py-3 font-semibold">Pueblo/País</th>
                         <th class="px-4 py-3 font-semibold">Firma</th>
                         <th class="px-4 py-3 font-semibold">Como supo</th>
-                        <th class="px-4 py-3 font-semibold">Comentarios</th>
                         <th class="px-4 py-3 font-semibold">Promo</th>
                     </tr>
                 </thead>
@@ -74,10 +108,27 @@
                             <td class="px-4 py-3 text-slate-600">@customer.PhoneNumber</td>
                             <td class="px-4 py-3 text-slate-600">@customer.Email</td>
                             <td class="px-4 py-3 text-slate-600">@customer.City, @customer.Country</td>
-                            <td class="px-4 py-3 text-slate-600">@(customer.LiabilityWaiverSigned ? "Sí" : "No")</td>
-                            <td class="px-4 py-3 text-slate-600">@customer.ElectronicSignature</td>
+                            <td class="px-4 py-3 text-slate-600">
+                                @{
+                                    var signatureImageSrc = BuildSignatureImageSrc(customer.ElectronicSignature);
+                                }
+                                @if (!string.IsNullOrWhiteSpace(signatureImageSrc))
+                                {
+                                    <details class="group">
+                                        <summary class="cursor-pointer text-xs font-semibold text-slate-700 hover:text-slate-900">
+                                            Firma capturada
+                                        </summary>
+                                        <img src="@signatureImageSrc"
+                                             alt="Firma electrónica"
+                                             class="mt-2 max-h-24 rounded border border-slate-200 bg-white p-1" />
+                                    </details>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
                             <td class="px-4 py-3 text-slate-600">@customer.HowDidYouHear</td>
-                            <td class="px-4 py-3 text-slate-600">@customer.Observations</td>
                             <td class="px-4 py-3 text-slate-600">@(customer.AuthorizeRecontact ? "Sí" : "No")</td>
                         </tr>
                     }
@@ -220,3 +271,4 @@
         })();
     </script>
 }
+

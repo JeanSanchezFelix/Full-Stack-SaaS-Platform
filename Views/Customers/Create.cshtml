@@ -4,7 +4,6 @@
 @{
     ViewData["Title"] = "Registro";
     var waiverReturnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
-    var draftErrors = ViewData["DraftErrors"] as List<string> ?? new List<string>();
 
     string FirstError(string key)
     {
@@ -55,17 +54,6 @@
     <form id="customer-intake-form" asp-action="Create" method="post" class="space-y-8" novalidate>
         <input asp-for="ReturnUrl" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
-        @if (draftErrors.Count > 0)
-        {
-            <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                <ul class="list-inside list-disc space-y-1">
-                    @foreach (var error in draftErrors)
-                    {
-                        <li>@error</li>
-                    }
-                </ul>
-            </div>
-        }
         <div class="grid gap-5 md:grid-cols-2">
             <div data-svelte-component="TextEntryField" data-props='@FieldProps("FirstName", "Nombre", Model.FirstName, required: true)'></div>
             <div data-svelte-component="TextEntryField" data-props='@FieldProps("LastName", "Apellido", Model.LastName, required: true)'></div>
@@ -74,18 +62,27 @@
             <div data-svelte-component="TextEntryField" data-props='@FieldProps("Email", "Correo electrónico", Model.Email, type: "email", required: false)'></div>
             <div data-svelte-component="TextEntryField" data-props='@FieldProps("City", "Pueblo de procedencia", Model.City, required: true)'></div>
             <div data-svelte-component="TextEntryField" data-props='@FieldProps("Country", "País", Model.Country, required: true)'></div>
-            <div data-svelte-component="TextEntryField" data-props='@FieldProps("HowDidYouHear", "¿Cómo supiste de nosotros?", Model.HowDidYouHear, multiline: true, rows: 3, wrapperClass: "md:col-span-2")'></div>
-            @* <div data-svelte-component="TextEntryField" data-props='@FieldProps("Observations", "Comentarios adicionales", Model.Observations, multiline: true, rows: 3, wrapperClass: "md:col-span-2")'></div> *@
+            <div data-svelte-component="TextEntryField" data-props='@FieldProps("HowDidYouHear", "¿Cómo supiste de nosotros?", Model.HowDidYouHear, multiline: true, rows: 1, wrapperClass: "md:col-span-2")'></div>
         </div>
-            <div data-signature-field>
+        <div data-signature-field>
+            <div data-signature-dimmable>
                 <label asp-for="ElectronicSignature" class="block text-sm font-medium text-slate-800">
                     @Html.DisplayNameFor(model => model.ElectronicSignature) <span class="text-red-600">&nbsp*</span>
                 </label>
-                <input asp-for="ElectronicSignature" required class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
-                <p class="mt-2 text-xs text-slate-500">Es requerido su nombre completo para guardar el registro.</p>
+                <input asp-for="ElectronicSignature" type="hidden" />
+                <div class="mt-2 overflow-hidden rounded-md border border-slate-300 bg-white">
+                    <canvas id="electronic-signature-pad" class="block h-40 w-full touch-none"></canvas>
+                </div>
+                <div class="mt-2 flex items-center justify-between">
+                    <p class="text-xs text-slate-500">Dibuja tu firma en el recuadro para guardar el registro.</p>
+                    <button type="button" id="clear-signature-btn" class="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                        Limpiar firma
+                    </button>
+                </div>
                 <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
             </div>
-        <p class="text-xs text-slate-500 text-right">Los campos con <span class="text-red-600">*</span> son requeridos.</p>
+            <p class="text-xs text-slate-500 text-left mt-2">Los campos con <span class="text-red-600">*</span> son requeridos.</p>
+        </div>
         <div class="space-y-4 border-t border-slate-200 pt-6">
             <label class="flex items-start gap-3 text-sm text-slate-700">
                 <input asp-for="LiabilityWaiverSigned" class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
@@ -116,58 +113,188 @@
     </form>
 </section>
 <script>
-    // Save form data to localStorage before navigating away
     const form = document.getElementById('customer-intake-form');
-    
-    // Restore form data on page load
-    window.addEventListener('load', () => {
-        const savedData = localStorage.getItem('customer-intake-form');
-        if (savedData) {
-            try {
-                const data = JSON.parse(savedData);
-                Object.keys(data).forEach(key => {
-                    const input = form.elements[key];
-                    if (input) {
-                        if (input.type === 'checkbox') {
-                            input.checked = data[key];
-                        } else {
-                            input.value = data[key];
-                        }
-                    }
-                });
-                localStorage.removeItem('customer-intake-form');
-            } catch (e) {
-                console.error('Failed to restore form data:', e);
-            }
-        }
-    });
+    const draftStorageKey = 'customer-intake-form';
+    let allowDraftPersistence = true;
 
-    // Save form data when clicking the waiver link
-    document.addEventListener('click', (e) => {
-        if (e.target.href && e.target.href.includes('LiabilityWaiver')) {
-            const formData = {};
-            Array.from(form.elements).forEach(input => {
-                if (input.name && (input.type !== 'hidden' || input.name.startsWith('__'))) {
-                    if (input.type === 'checkbox') {
-                        formData[input.name] = input.checked;
-                    } else {
-                        formData[input.name] = input.value;
-                    }
+    const collectFormDraft = () => {
+        if (!form) return {};
+        const formData = {};
+        Array.from(form.elements).forEach(input => {
+            if (!input?.name || input.name === 'ElectronicSignature') {
+                return;
+            }
+            if (input.type === 'hidden' && !input.name.startsWith('__')) {
+                return;
+            }
+            if (input.type === 'checkbox') {
+                formData[input.name] = input.checked;
+            } else {
+                formData[input.name] = input.value;
+            }
+        });
+        return formData;
+    };
+
+    const saveFormDraft = () => {
+        if (!allowDraftPersistence) return;
+        if (!form) return;
+        try {
+            localStorage.setItem(draftStorageKey, JSON.stringify(collectFormDraft()));
+        } catch (e) {
+            console.error('Failed to save form data:', e);
+        }
+    };
+
+    const restoreFormDraft = () => {
+        if (!form) return;
+        const savedData = localStorage.getItem(draftStorageKey);
+        if (!savedData) return;
+        try {
+            const data = JSON.parse(savedData);
+            Object.keys(data).forEach(key => {
+                const checkboxInput = form.querySelector(`input[name="${key}"][type="checkbox"]`);
+                if (checkboxInput) {
+                    checkboxInput.checked = Boolean(data[key]);
+                    return;
                 }
+
+                const input = form.elements[key];
+                if (!input) return;
+                input.value = data[key];
             });
-            localStorage.setItem('customer-intake-form', JSON.stringify(formData));
+            localStorage.removeItem(draftStorageKey);
+            form.dispatchEvent(new Event('input', { bubbles: true }));
+            form.dispatchEvent(new Event('change', { bubbles: true }));
+        } catch (e) {
+            console.error('Failed to restore form data:', e);
+        }
+    };
+
+    // Restore on page load, and save on refresh/navigation.
+    window.addEventListener('load', restoreFormDraft);
+    window.addEventListener('beforeunload', saveFormDraft);
+    form?.addEventListener('input', saveFormDraft);
+    form?.addEventListener('change', saveFormDraft);
+
+    // Keep explicit waiver-link save as well (works for click on nested elements too).
+    document.addEventListener('click', (e) => {
+        const link = e.target?.closest?.('a[href*="LiabilityWaiver"]');
+        if (link) {
+            saveFormDraft();
         }
     });
 
     const waiverCheckbox = form.querySelector('input[name="LiabilityWaiverSigned"][type="checkbox"]');
     const waiverClientError = form.querySelector('[data-waiver-client-error]');
+    const signatureInput = form.querySelector('input[name="ElectronicSignature"]');
+    const signatureCanvas = document.getElementById('electronic-signature-pad');
+    const clearSignatureBtn = document.getElementById('clear-signature-btn');
+    const signatureDimmable = form.querySelector('[data-signature-dimmable]');
+    const signatureCtx = signatureCanvas?.getContext('2d');
+    let isDrawing = false;
+    let hasSignature = false;
 
     const syncWaiverClientError = () => {
         if (!waiverCheckbox || !waiverClientError) return;
         waiverClientError.classList.toggle('hidden', waiverCheckbox.checked);
     };
 
+    const resizeSignaturePad = () => {
+        if (!signatureCanvas || !signatureCtx) return;
+
+        const { width, height } = signatureCanvas.getBoundingClientRect();
+        if (width <= 0 || height <= 0) return;
+
+        const ratio = window.devicePixelRatio || 1;
+        const previousData = hasSignature ? signatureCanvas.toDataURL('image/png') : null;
+        signatureCanvas.width = Math.floor(width * ratio);
+        signatureCanvas.height = Math.floor(height * ratio);
+        signatureCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        signatureCtx.lineCap = 'round';
+        signatureCtx.lineJoin = 'round';
+        signatureCtx.lineWidth = 2;
+        signatureCtx.strokeStyle = '#0f172a';
+
+        if (previousData) {
+            const image = new Image();
+            image.onload = () => signatureCtx.drawImage(image, 0, 0, width, height);
+            image.src = previousData;
+        } else {
+            signatureCtx.clearRect(0, 0, width, height);
+        }
+    };
+
+    const saveSignatureToInput = () => {
+        if (!signatureInput || !signatureCanvas) return;
+        signatureInput.value = hasSignature ? signatureCanvas.toDataURL('image/png') : '';
+    };
+
+    const clearSignature = () => {
+        if (!signatureCanvas || !signatureCtx) return;
+        const { width, height } = signatureCanvas.getBoundingClientRect();
+        signatureCtx.clearRect(0, 0, width, height);
+        hasSignature = false;
+        saveSignatureToInput();
+    };
+
+    const getCanvasPoint = (event) => {
+        if (!signatureCanvas) return { x: 0, y: 0 };
+        const rect = signatureCanvas.getBoundingClientRect();
+        const point = event.touches ? event.touches[0] : event;
+        return {
+            x: point.clientX - rect.left,
+            y: point.clientY - rect.top
+        };
+    };
+
+    const beginDraw = (event) => {
+        if (!signatureCtx || waiverCheckbox?.checked === false) return;
+        isDrawing = true;
+        const { x, y } = getCanvasPoint(event);
+        signatureCtx.beginPath();
+        signatureCtx.moveTo(x, y);
+        event.preventDefault();
+    };
+
+    const draw = (event) => {
+        if (!isDrawing || !signatureCtx) return;
+        const { x, y } = getCanvasPoint(event);
+        signatureCtx.lineTo(x, y);
+        signatureCtx.stroke();
+        hasSignature = true;
+        saveSignatureToInput();
+        event.preventDefault();
+    };
+
+    const endDraw = () => {
+        if (!signatureCtx) return;
+        isDrawing = false;
+        signatureCtx.closePath();
+    };
+
+    const syncSignatureLock = () => {
+        const enabled = waiverCheckbox?.checked ?? false;
+        signatureCanvas?.classList.toggle('pointer-events-none', !enabled);
+        signatureDimmable?.classList.toggle('opacity-50', !enabled);
+        if (!enabled) {
+            clearSignature();
+        }
+    };
+
+    resizeSignaturePad();
+    window.addEventListener('resize', resizeSignaturePad);
+    clearSignatureBtn?.addEventListener('click', clearSignature);
+    signatureCanvas?.addEventListener('mousedown', beginDraw);
+    signatureCanvas?.addEventListener('mousemove', draw);
+    signatureCanvas?.addEventListener('mouseup', endDraw);
+    signatureCanvas?.addEventListener('mouseleave', endDraw);
+    signatureCanvas?.addEventListener('touchstart', beginDraw, { passive: false });
+    signatureCanvas?.addEventListener('touchmove', draw, { passive: false });
+    signatureCanvas?.addEventListener('touchend', endDraw);
+
     waiverCheckbox?.addEventListener('change', syncWaiverClientError);
+    waiverCheckbox?.addEventListener('change', syncSignatureLock);
 
     form.addEventListener('submit', (e) => {
         const waiverChecked = waiverCheckbox?.checked;
@@ -175,11 +302,23 @@
             e.preventDefault();
             syncWaiverClientError();
             waiverCheckbox?.focus();
+            return;
         }
+
+        saveSignatureToInput();
+        if (!signatureInput?.value) {
+            e.preventDefault();
+            syncWaiverClientError();
+            return;
+        }
+
+        // Submission is valid; stop saving draft during navigation and clear it.
+        allowDraftPersistence = false;
+        localStorage.removeItem(draftStorageKey);
     });
+
+    syncSignatureLock();
 </script>
-
-
 
 
 

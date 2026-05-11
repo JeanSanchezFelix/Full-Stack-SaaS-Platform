@@ -12,9 +12,8 @@ public class AdminCustomerListItemViewModel
     public string City { get; set; } = string.Empty;
     public string Country { get; set; } = string.Empty;
     public bool LiabilityWaiverSigned { get; set; }
-    public string? ElectronicSignature { get; set; }
+    public byte[]? ElectronicSignature { get; set; }
     public string? HowDidYouHear { get; set; }
-    public string? Observations { get; set; }
     public bool AuthorizeRecontact { get; set; }
     public DateTime CreatedAt { get; set; }
 }
