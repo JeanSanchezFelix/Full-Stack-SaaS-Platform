@@ -227,7 +227,7 @@ public class BookingsController : Controller
 
         await _dbContext.SaveChangesAsync();
 
-        TempData["BookingCreated"] = "Reserva solicitada. Revisaremos los detalles y la aprobaremos pronto.";
+        TempData["BookingCreated"] = "Reserva solicitada. ¡Que disfrute de su aventura sobre ruedas!";
         return RedirectToAction("User", "Accounts");
     }
 
@@ -247,6 +247,7 @@ public class BookingsController : Controller
                 RequestedEnd = booking.RequestedEnd,
                 ScooterQuantity = booking.ScooterQuantity,
                 EbikeQuantity = booking.EbikeQuantity,
+                EstimatedTotal = booking.EstimatedTotal,
                 Status = booking.Status,
                 AdminNotes = booking.AdminNotes
             })

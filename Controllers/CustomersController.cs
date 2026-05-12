@@ -113,7 +113,7 @@ public class CustomersController : Controller
         _dbContext.Customers.Add(customer);
         await _dbContext.SaveChangesAsync();
 
-        TempData["CustomerCreated"] = $"{customer.FirstName} {customer.LastName} was saved with customer code {customer.CustomerCode}.";
+        TempData["CustomerCreated"] = $"El perfil de {customer.FirstName} {customer.LastName} fue guardado con el código de cliente {customer.CustomerCode}.";
 
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
         {

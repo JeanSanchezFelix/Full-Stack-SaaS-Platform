@@ -42,17 +42,34 @@
 
     var exportCustomersButtonProps = JsonSerializer.Serialize(new
     {
-        label = "Exportar clientes (CSV)",
+        label = "Exportar clientes (XLSX)",
         href = Url.Action("ExportCustomers", "Accounts"),
         variant = "primary"
     });
+    var exportBookingsButtonProps = JsonSerializer.Serialize(new
+    {
+        label = "Exportar reservas (XLSX)",
+        href = Url.Action("ExportBookings", "Accounts"),
+        variant = "primary"
+    });
+
+    const int adminTablePageSize = 10;
+    var customerContextByLicense = Model.Customers
+        .Where(c => !string.IsNullOrWhiteSpace(c.LicenseNumber))
+        .ToDictionary(
+            c => c.LicenseNumber!.Trim().ToLowerInvariant(),
+            c => new
+            {
+                c.Id,
+                c.Bookings
+            });
 }
 
 <section class="mx-auto max-w-6xl">
     <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
             <h1 class="text-3xl font-bold tracking-normal text-slate-950">Panel de Administración</h1>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Aprueba reservas pendientes para crear la entrada en rental.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Supervisa el historial de reservas y los perfiles creados.</p>
         </div>
     </div>
 
@@ -86,31 +103,40 @@
 
     @if (Model.ActiveTab == "clients")
     {
-        <div class="mb-4 flex justify-end">
+        <div class="mb-4 flex justify-end ">
             <div data-svelte-component="ActionButton"
                  data-props='@exportCustomersButtonProps'></div>
         </div>
-        <div class="overflow-hidden rounded-md border border-slate-200 bg-white">
-            <table class="min-w-full divide-y divide-slate-200 text-sm">
-                <thead class="bg-slate-50 text-left text-slate-600">
+        <div class="mb-3 flex items-center gap-2" data-table-toolbar="clients"></div>
+        <div class="overflow-x-auto rounded-md border border-slate-200 bg-white">
+            <table class="min-w-full divide-y divide-slate-200 text-sm" data-admin-table="clients">
+                <thead class="bg-slate-50 text-slate-700 text-center">
                     <tr>
-                        <th class="px-4 py-3 font-semibold">Código</th>
-                        <th class="px-4 py-3 font-semibold">Nombre</th>
-                        <th class="px-4 py-3 font-semibold">Licencia</th>
-                        <th class="px-4 py-3 font-semibold">Teléfono</th>
-                        <th class="px-4 py-3 font-semibold">Email</th>
-                        <th class="px-4 py-3 font-semibold">Pueblo/País</th>
-                        <th class="px-4 py-3 font-semibold">Firma</th>
-                        <th class="px-4 py-3 font-semibold">Como supo</th>
-                        <th class="px-4 py-3 font-semibold">Promo</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Nombre</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Licencia</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Teléfono</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Email</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Pueblo/País</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Firma</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">¿Cómo supo?</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Promo</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100" data-paged-table-body data-page-size="@adminTablePageSize">
                     @foreach (AdminCustomerListItemViewModel customer in Model.Customers)
                     {
-                        <tr>
-                            <td class="px-4 py-3 font-medium text-slate-900">@customer.CustomerCode</td>
-                            <td class="px-4 py-3 text-slate-600">@customer.FirstName @customer.LastName</td>
+                        <tr class="odd:bg-white even:bg-slate-50 text-center" data-paged-row>
+                            <td class="px-4 py-3">
+                                <button
+                                    type="button"
+                                    class="font-semibold text-slate-600 hover:text-slate-900"
+                                    data-customer-history-button
+                                    data-customer-id="@customer.Id"
+                                    data-customer-name="@($"{customer.FirstName} {customer.LastName}".Trim())"
+                                    data-customer-bookings='@JsonSerializer.Serialize(customer.Bookings)'>
+                                    @customer.FirstName @customer.LastName
+                                </button>
+                            </td>
                             <td class="px-4 py-3 text-slate-600">@customer.LicenseNumber</td>
                             <td class="px-4 py-3 text-slate-600">@customer.PhoneNumber</td>
                             <td class="px-4 py-3 text-slate-600">@customer.Email</td>
@@ -122,7 +148,7 @@
                                 @if (!string.IsNullOrWhiteSpace(signatureImageSrc))
                                 {
                                     <details class="group">
-                                        <summary class="cursor-pointer text-xs font-semibold text-slate-700 hover:text-slate-900">
+                                        <summary class="cursor-pointer text-xs font-semibold text-slate-600 hover:text-slate-900">
                                             Firma capturada
                                         </summary>
                                         <img src="@signatureImageSrc"
@@ -142,41 +168,69 @@
                 </tbody>
             </table>
         </div>
+        @if (Model.Customers.Count > adminTablePageSize)
+        {
+            <div class="mt-3 flex flex-wrap gap-2" data-paged-table-controls></div>
+        }
     }
     else
     {
-        <div class="overflow-hidden rounded-md border border-slate-200 bg-white">
-            <table class="min-w-full divide-y divide-slate-200 text-sm">
-                <thead class="bg-slate-50 text-left text-slate-600">
+        <div class="mb-4 flex justify-end">
+            <div data-svelte-component="ActionButton"
+                 data-props='@exportBookingsButtonProps'></div>
+        </div>
+        <div class="mb-3 flex items-center gap-2" data-table-toolbar="bookings"></div>
+        <div class="overflow-x-auto rounded-md border border-slate-200 bg-white">
+            <table class="min-w-full divide-y divide-slate-200 text-sm" data-admin-table="bookings">
+                <thead class="bg-slate-50 text-center text-slate-700">
                     <tr>
-                        <th class="px-4 py-3 font-semibold">Cliente</th>
-                        <th class="px-4 py-3 font-semibold">Licencia</th>
-                        <th class="px-4 py-3 font-semibold">Fecha</th>
-                        <th class="px-4 py-3 font-semibold">Inicio</th>
-                        <th class="px-4 py-3 font-semibold">Fin</th>
-                        <th class="px-4 py-3 font-semibold">Duracion</th>
-                        <th class="px-4 py-3 font-semibold">Scooters</th>
-                        <th class="px-4 py-3 font-semibold">E-bikes</th>
-                        <th class="px-4 py-3 font-semibold">Estado</th>
-                        <th class="px-4 py-3 font-semibold">Nota admin</th>
-                        <th class="px-4 py-3 font-semibold"></th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Cliente</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Licencia</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="date">Fecha</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="time">Comienza</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="time">Concluye</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="number">Duración</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="number">Scooters</th>
+                        <th class="min-w-[80px] px-4 py-3 font-semibold" data-col-type="number">E-bikes</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="currency">Total estimado</th>
+                        @* <th class="px-4 py-3 font-semibold">Estado</th> *@
+                        @* <th class="px-4 py-3 font-semibold">Nota admin</th> *@
+                        @* <th class="px-4 py-3 font-semibold"></th> *@
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100" data-paged-table-body data-page-size="@adminTablePageSize">
                     @foreach (var booking in Model.Bookings)
                     {
-                        <tr>
-                            <td class="px-4 py-3 font-medium text-slate-900">@booking.CustomerName</td>
+                        var normalizedLicense = booking.LicenseNumber?.Trim().ToLowerInvariant();
+                        var customerContext = normalizedLicense is not null && customerContextByLicense.TryGetValue(normalizedLicense, out var context)
+                            ? context
+                            : null;
+                        var bookingHistoryForCustomer = customerContext is not null
+                            ? customerContext.Bookings
+                            : Array.Empty<AdminCustomerBookingHistoryItemViewModel>();
+                        <tr class="odd:bg-white even:bg-slate-50 text-center" data-paged-row>
+                            <td class="px-4 py-3">
+                                <button
+                                    type="button"
+                                    class="font-semibold text-slate-600 hover:text-slate-900"
+                                    data-customer-history-button
+                                    data-customer-id="@(customerContext?.Id)"
+                                    data-customer-name="@booking.CustomerName"
+                                    data-customer-bookings='@JsonSerializer.Serialize(bookingHistoryForCustomer)'>
+                                    @booking.CustomerName
+                                </button>
+                            </td>
                             <td class="px-4 py-3 text-slate-600">@booking.LicenseNumber</td>
                             <td class="px-4 py-3 text-slate-600">@booking.RequestedStart.ToString("d")</td>
                             <td class="px-4 py-3 text-slate-600">@booking.RequestedStart.ToString("HH:mm")</td>
                             <td class="px-4 py-3 text-slate-600">@(booking.RequestedEnd?.ToString("HH:mm") ?? "-")</td>
-                            <td class="px-4 py-3 text-slate-600">@(booking.RequestedEnd.HasValue ? Math.Round((booking.RequestedEnd.Value - booking.RequestedStart).TotalHours) : 0)h</td>
+                            <td class="px-4 py-3 text-slate-600">@(booking.RequestedEnd.HasValue ? Math.Round((booking.RequestedEnd.Value - booking.RequestedStart).TotalHours) : 0) h</td>
                             <td class="px-4 py-3 text-slate-600">@booking.ScooterQuantity</td>
                             <td class="px-4 py-3 text-slate-600">@booking.EbikeQuantity</td>
-                            <td class="px-4 py-3 text-slate-600">@booking.Status</td>
-                            <td class="px-4 py-3 text-slate-600">@booking.AdminNotes</td>
-                            <td class="px-4 py-3 text-right">
+                            <td class="px-4 py-3 text-slate-600">@(booking.EstimatedTotal.HasValue ? booking.EstimatedTotal.Value.ToString("C") : "-")</td>
+                            @* <td class="px-4 py-3 text-slate-600">@booking.Status</td> *@
+                            @* <td class="px-4 py-3 text-slate-600">@booking.AdminNotes</td> *@
+                            @* <td class="px-4 py-3 text-right">
                                 @if (booking.Status == "pending")
                                 {
                                     <div class="flex items-center justify-end gap-2">
@@ -200,12 +254,16 @@
                                         Re-aprobar
                                     </button>
                                 }
-                            </td>
+                            </td> *@
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+        @if (Model.Bookings.Count > adminTablePageSize)
+        {
+            <div class="mt-3 flex flex-wrap gap-2" data-paged-table-controls></div>
+        }
     }
 
     <div id="booking-action-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
@@ -227,9 +285,81 @@
             </form>
         </div>
     </div>
+
+    <div id="customer-history-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-4xl rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-base font-semibold text-slate-900">Historial de Reservas — <span id="customer-history-name" class="font-bold"></span></h3>
+                <div class="flex items-center gap-2">
+                    <button type="button"
+                            class="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100"
+                            onclick="closeCustomerHistoryModal()">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+            <p class="text-center mb-3 text-sm font-semibold text-slate-700"></p>
+            <div class="max-h-80 overflow-auto rounded-md border border-slate-200">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50 text-center text-slate-600">
+                        <tr>
+                            <th class="px-3 py-2 font-semibold">Fecha</th>
+                            <th class="px-3 py-2 font-semibold">Comienza</th>
+                            <th class="px-3 py-2 font-semibold">Concluye</th>
+                            <th class="px-3 py-2 font-semibold">Duración</th>
+                            <th class="px-3 py-2 font-semibold">Scooters</th>
+                            <th class="px-3 py-2 font-semibold">E-bikes</th>
+                            <th class="px-3 py-2 font-semibold">Total estimado</th>
+                            <th class="px-3 py-2 font-semibold"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="customer-history-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+                
+            </div>
+            <div class="mt-3 flex items-center gap-2">
+            <button type="button"
+                    id="delete-customer-button"
+                    class="inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700">
+                <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                <span>Eliminar cliente</span>
+            </button>
+            </div>
+            <p id="customer-history-empty" class="mt-3 hidden text-sm text-slate-600 text-center">El cliente no tiene reservas registradas.</p>
+        </div>
+    </div>
+    <form id="delete-customer-form" asp-controller="Accounts" asp-action="DeleteCustomer" method="post" class="hidden">
+        @Html.AntiForgeryToken()
+        <input type="hidden" id="delete-customer-id" name="id" />
+        <input type="hidden" name="tab" value="clients" />
+    </form>
+    <form id="delete-booking-form" asp-controller="Accounts" asp-action="DeleteBooking" method="post" class="hidden">
+        @Html.AntiForgeryToken()
+        <input type="hidden" id="delete-booking-id" name="id" />
+        <input type="hidden" id="delete-booking-tab" name="tab" value="bookings" />
+    </form>
+    <div id="admin-confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-md rounded-md border border-t-4 border-red-600 bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-900" id="admin-confirm-title">(¿Confirmar acción?</h3>
+            <p class="mt-2 text-sm text-slate-600" id="admin-confirm-message"></p>
+            <div class="mt-4 flex justify-end gap-2">
+                <button type="button"
+                        id="admin-confirm-cancel"
+                        class="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                    Cancelar
+                </button>
+                <button type="button"
+                        id="admin-confirm-accept"
+                        class="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
 </section>
 
 @section Scripts {
+    <script src="https://unpkg.com/lucide@0.539.0/dist/umd/lucide.min.js"></script>
     <script>
         (() => {
             const modal = document.getElementById('booking-action-modal');
@@ -239,6 +369,22 @@
             const title = document.getElementById('booking-action-title');
             const description = document.getElementById('booking-action-description');
             const confirmButton = document.getElementById('booking-action-confirm');
+            const customerHistoryModal = document.getElementById('customer-history-modal');
+            const customerHistoryName = document.getElementById('customer-history-name');
+            const customerHistoryBody = document.getElementById('customer-history-body');
+            const customerHistoryEmpty = document.getElementById('customer-history-empty');
+            const deleteCustomerButton = document.getElementById('delete-customer-button');
+            const deleteCustomerForm = document.getElementById('delete-customer-form');
+            const deleteCustomerIdInput = document.getElementById('delete-customer-id');
+            const deleteBookingForm = document.getElementById('delete-booking-form');
+            const deleteBookingIdInput = document.getElementById('delete-booking-id');
+            const deleteBookingTabInput = document.getElementById('delete-booking-tab');
+            const adminConfirmModal = document.getElementById('admin-confirm-modal');
+            const adminConfirmTitle = document.getElementById('admin-confirm-title');
+            const adminConfirmMessage = document.getElementById('admin-confirm-message');
+            const adminConfirmCancel = document.getElementById('admin-confirm-cancel');
+            const adminConfirmAccept = document.getElementById('admin-confirm-accept');
+            let pendingConfirmAction = null;
 
             window.openBookingModal = (bookingId, mode) => {
                 if (!modal || !form || !idInput || !noteInput || !title || !description || !confirmButton) {
@@ -275,7 +421,561 @@
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             };
+
+            function getBookingValue(booking, camelName, pascalName) {
+                if (!booking || typeof booking !== 'object') return undefined;
+                return booking[camelName] ?? booking[pascalName];
+            }
+
+            function toValidDate(value) {
+                if (!value) return null;
+                const parsed = new Date(value);
+                return Number.isNaN(parsed.getTime()) ? null : parsed;
+            }
+
+            function formatDate(value) {
+                const parsed = toValidDate(value);
+                return parsed ? parsed.toLocaleDateString('es-PR') : '-';
+            }
+
+            function formatTime(value) {
+                const parsed = toValidDate(value);
+                return parsed ? parsed.toLocaleTimeString('es-PR', { hour: '2-digit', minute: '2-digit' }) : '-';
+            }
+
+            window.closeCustomerHistoryModal = () => {
+                if (!customerHistoryModal) {
+                    return;
+                }
+
+                customerHistoryModal.classList.add('hidden');
+                customerHistoryModal.classList.remove('flex');
+            };
+
+            customerHistoryModal?.addEventListener('click', (event) => {
+                if (event.target === customerHistoryModal) {
+                    window.closeCustomerHistoryModal();
+                }
+            });
+
+            const openAdminConfirm = (message, onAccept) => {
+                if (!adminConfirmModal || !adminConfirmMessage || !adminConfirmAccept) return;
+                pendingConfirmAction = onAccept;
+                adminConfirmMessage.textContent = message;
+                if (adminConfirmTitle) {
+                    adminConfirmTitle.textContent = '¿Confirmar acción?';
+                }
+                adminConfirmModal.classList.remove('hidden');
+                adminConfirmModal.classList.add('flex');
+            };
+
+            const closeAdminConfirm = () => {
+                if (!adminConfirmModal) return;
+                adminConfirmModal.classList.add('hidden');
+                adminConfirmModal.classList.remove('flex');
+                pendingConfirmAction = null;
+            };
+
+            adminConfirmCancel?.addEventListener('click', closeAdminConfirm);
+            adminConfirmModal?.addEventListener('click', (event) => {
+                if (event.target === adminConfirmModal) {
+                    closeAdminConfirm();
+                }
+            });
+            adminConfirmAccept?.addEventListener('click', () => {
+                const action = pendingConfirmAction;
+                closeAdminConfirm();
+                if (typeof action === 'function') {
+                    action();
+                }
+            });
+
+            document.querySelectorAll('[data-customer-history-button]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    if (!customerHistoryModal || !customerHistoryName || !customerHistoryBody || !customerHistoryEmpty) {
+                        return;
+                    }
+
+                    const customerName = button.getAttribute('data-customer-name') || '';
+                    const customerId = button.getAttribute('data-customer-id') || '';
+                    const bookingsJson = button.getAttribute('data-customer-bookings') || '[]';
+                    let bookings = [];
+                    try {
+                        bookings = JSON.parse(bookingsJson);
+                    } catch {
+                        bookings = [];
+                    }
+
+                    customerHistoryName.textContent = customerName;
+                    customerHistoryBody.innerHTML = '';
+                    if (deleteCustomerIdInput) {
+                        deleteCustomerIdInput.value = customerId;
+                    }
+                    if (deleteCustomerButton) {
+                        deleteCustomerButton.disabled = !customerId;
+                        deleteCustomerButton.className = customerId
+                            ? 'inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700'
+                            : 'inline-flex items-center justify-center gap-1 rounded-md border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-400 cursor-not-allowed';
+                    }
+
+                    if (!Array.isArray(bookings) || bookings.length === 0) {
+                        customerHistoryEmpty.classList.remove('hidden');
+                    } else {
+                        customerHistoryEmpty.classList.add('hidden');
+                        bookings.forEach((booking) => {
+                            const requestedStart = getBookingValue(booking, 'requestedStart', 'RequestedStart');
+                            const requestedEnd = getBookingValue(booking, 'requestedEnd', 'RequestedEnd');
+                            const scooterQuantity = getBookingValue(booking, 'scooterQuantity', 'ScooterQuantity');
+                            const ebikeQuantity = getBookingValue(booking, 'ebikeQuantity', 'EbikeQuantity');
+                            const estimatedTotal = getBookingValue(booking, 'estimatedTotal', 'EstimatedTotal');
+                            const bookingId = getBookingValue(booking, 'id', 'Id');
+                            const startDate = toValidDate(requestedStart);
+                            const endDate = toValidDate(requestedEnd);
+                            const endText = endDate ? formatTime(requestedEnd) : '-';
+                            const durationText = startDate && endDate
+                                ? `${Math.round((endDate - startDate) / 3600000)} h`
+                                : '-';
+                            const numericEstimatedTotal = estimatedTotal == null ? NaN : Number(estimatedTotal);
+                            const totalText = Number.isFinite(numericEstimatedTotal)
+                                ? numericEstimatedTotal.toLocaleString('es-PR', { style: 'currency', currency: 'USD' })
+                                : '-';
+
+                            const row = document.createElement('tr');
+                            row.className = 'odd:bg-white even:bg-slate-50 text-center';
+                            row.innerHTML = `
+                                <td class="px-3 py-2 text-slate-700">${formatDate(requestedStart)}</td>
+                                <td class="px-3 py-2 text-slate-700">${formatTime(requestedStart)}</td>
+                                <td class="px-3 py-2 text-slate-700">${endText}</td>
+                                <td class="px-3 py-2 text-slate-700">${durationText}</td>
+                                <td class="px-3 py-2 text-slate-700">${scooterQuantity ?? '-'}</td>
+                                <td class="px-3 py-2 text-slate-700">${ebikeQuantity ?? '-'}</td>
+                                <td class="px-3 py-2 text-slate-700">${totalText}</td>
+                                <td class="px-3 py-2">
+                                    ${bookingId
+                                        ? `
+                                        <div type="button" data-delete-booking-id="${bookingId}">
+                                            <button
+                                                type="button"
+                                                class="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white p-1.5 text-slate-700 transition hover:bg-red-50 hover:text-red-800"
+                                                data-delete-booking-id="${bookingId}"
+                                            >
+                                                <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                                            </button>
+                                        </div>        
+                                        `
+                                        : '<span class="text-slate-400">-</span>'}
+                                </td>
+                            `;
+                            customerHistoryBody.appendChild(row);
+                        });
+                        if (window.lucide?.createIcons) {
+                            window.lucide.createIcons();
+                        }
+                    }
+
+                    customerHistoryModal.classList.remove('hidden');
+                    customerHistoryModal.classList.add('flex');
+                });
+            });
+
+            customerHistoryBody?.addEventListener('click', (event) => {
+                const target = event.target;
+                if (!(target instanceof Element)) return;
+                const deleteBookingButton = target.closest('[data-delete-booking-id]');
+                if (!deleteBookingButton || !deleteBookingIdInput || !deleteBookingForm) return;
+
+                const bookingId = deleteBookingButton.getAttribute('data-delete-booking-id');
+                if (!bookingId) return;
+
+                openAdminConfirm('Esta acción eliminará la reserva de forma permanente. ¿Deseas continuar?', () => {
+                    deleteBookingIdInput.value = bookingId;
+                    if (deleteBookingTabInput) {
+                        deleteBookingTabInput.value = 'bookings';
+                    }
+                    deleteBookingForm.submit();
+                });
+            });
+
+            deleteCustomerButton?.addEventListener('click', () => {
+                if (!deleteCustomerIdInput || !deleteCustomerForm || !deleteCustomerIdInput.value) return;
+                openAdminConfirm('Esta acción eliminará el cliente y todas sus reservas de forma permanente. ¿Deseas continuar?', () => {
+                    deleteCustomerForm.submit();
+                });
+            });
+
+            const parseCellValue = (text, type) => {
+                const normalized = (text || '').trim();
+                if (!normalized || normalized === '-') return null;
+
+                if (type === 'number' || type === 'currency') {
+                    const numeric = Number(normalized.replace(/[^0-9.-]/g, ''));
+                    return Number.isFinite(numeric) ? numeric : null;
+                }
+
+                if (type === 'date') {
+                    const date = new Date(normalized);
+                    return Number.isNaN(date.getTime()) ? null : date.getTime();
+                }
+
+                if (type === 'time') {
+                    const match = normalized.match(/^(\d{1,2}):(\d{2})/);
+                    if (!match) return normalized.toLowerCase();
+                    return Number(match[1]) * 60 + Number(match[2]);
+                }
+
+                return normalized.toLowerCase();
+            };
+
+            const decorateHeader = (th, index, state) => {
+                if (!th) return;
+                const originalLabel = (th.textContent || '').trim();
+                th.textContent = '';
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'mx-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-900';
+                button.innerHTML = `<span>${originalLabel}</span><i data-lucide="chevrons-up-down" class="h-3.5 w-3.5"></i>`;
+
+                button.addEventListener('click', () => {
+                    if (state.sort.columnIndex !== index) {
+                        state.sort.columnIndex = index;
+                        state.sort.direction = 'asc';
+                    } else if (state.sort.direction === 'asc') {
+                        state.sort.direction = 'desc';
+                    } else {
+                        state.sort.columnIndex = null;
+                        state.sort.direction = null;
+                    }
+
+                    state.currentPage = 1;
+                    state.render();
+                    state.refreshSummary();
+                });
+
+                th.appendChild(button);
+            };
+
+            const createToolbar = (tableKey, headers, state) => {
+                const toolbar = document.querySelector(`[data-table-toolbar="${tableKey}"]`);
+                if (!toolbar) return;
+
+                toolbar.classList.add('relative', 'flex-wrap');
+
+                const sortBtn = document.createElement('button');
+                sortBtn.type = 'button';
+                sortBtn.className = 'inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100';
+                sortBtn.innerHTML = '<i data-lucide="arrow-up-down" class="h-3.5 w-3.5"></i><span>Ordenar</span>';
+                const sortBtnLabel = sortBtn.querySelector('span');
+
+                const filterBtn = document.createElement('button');
+                filterBtn.type = 'button';
+                filterBtn.className = 'inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100';
+                filterBtn.innerHTML = '<i data-lucide="list-filter" class="h-3.5 w-3.5"></i><span>Filtrar</span>';
+
+                const clearBtn = document.createElement('button');
+                clearBtn.type = 'button';
+                clearBtn.className = 'inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100';
+                clearBtn.innerHTML = '<i data-lucide="x-circle" class="h-3.5 w-3.5"></i><span>Limpiar</span>';
+
+                const sortPanel = document.createElement('div');
+                sortPanel.className = 'absolute left-0 top-9 z-10 hidden w-72 rounded-md border border-slate-200 bg-white p-3 shadow-lg';
+                sortPanel.innerHTML = `
+                    <p class="mb-2 text-xs font-semibold text-slate-700">Ordenar por</p>
+                    <select data-sort-column class="w-full rounded-md border bg-slate-50 border-slate-300 px-2 py-1.5 text-xs text-slate-900 font-semibold">
+                        <option value="">Sin ordenar</option>
+                    </select>
+                    <div class="mt-2 flex gap-2">
+                        <button type="button" data-sort-dir="asc" class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Ascendente</button>
+                        <button type="button" data-sort-dir="desc" class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Descendente</button>
+                    </div>
+                `;
+
+                const filterPanel = document.createElement('div');
+                filterPanel.className = 'absolute left-0 top-9 z-10 hidden w-80 rounded-md border border-slate-200 bg-white p-3 shadow-lg';
+                filterPanel.innerHTML = `
+                    <p class="mb-2 text-xs font-semibold text-slate-700">Filtrar por</p>
+                    <select data-filter-column class="w-full rounded-md border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-900 font-semibold"></select>
+                    <input data-filter-value type="text" class="mt-2 w-full rounded-md border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-700" placeholder="Escribe un valor..." />
+                    <div class="mt-2 flex gap-2">
+                        <button type="button" data-filter-apply class="rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-white hover:bg-slate-800">Aplicar</button>
+                        <button type="button" data-filter-clear class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Limpiar filtro</button>
+                    </div>
+                `;
+
+                const sortSelect = sortPanel.querySelector('[data-sort-column]');
+                const filterSelect = filterPanel.querySelector('[data-filter-column]');
+                const filterInput = filterPanel.querySelector('[data-filter-value]');
+
+                headers.forEach((th, index) => {
+                    const label = th.textContent?.trim() || `Columna ${index + 1}`;
+                    const sortOption = document.createElement('option');
+                    sortOption.value = String(index);
+                    sortOption.textContent = label;
+                    sortSelect.appendChild(sortOption);
+
+                    const filterOption = document.createElement('option');
+                    filterOption.value = String(index);
+                    filterOption.textContent = label;
+                    filterSelect.appendChild(filterOption);
+                });
+
+                const hidePanels = () => {
+                    sortPanel.classList.add('hidden');
+                    filterPanel.classList.add('hidden');
+                };
+
+                const refreshSummary = () => {
+                    const sortActive = state.sort.columnIndex !== null && state.sort.direction;
+                    const filterCount = state.filters.size;
+
+                    sortBtn.className = sortActive
+                        ? 'inline-flex items-center gap-1 rounded-md border border-slate-900 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white'
+                        : 'inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100';
+                    filterBtn.className = filterCount > 0
+                        ? 'inline-flex items-center gap-1 rounded-md border border-slate-900 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white'
+                        : 'inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100';
+
+                    if (sortBtnLabel) {
+                        sortBtnLabel.textContent = sortActive
+                            ? `${headers[state.sort.columnIndex].textContent?.trim() || ''} (${state.sort.direction === 'asc' ? 'Asc' : 'Desc'})`
+                            : 'Ordenar';
+                    }
+                };
+
+                sortBtn.addEventListener('click', () => {
+                    const isOpen = !sortPanel.classList.contains('hidden');
+                    hidePanels();
+                    if (!isOpen) {
+                        sortPanel.classList.remove('hidden');
+                        if (state.sort.columnIndex !== null) {
+                            sortSelect.value = String(state.sort.columnIndex);
+                        }
+                    }
+                });
+
+                filterBtn.addEventListener('click', () => {
+                    const isOpen = !filterPanel.classList.contains('hidden');
+                    hidePanels();
+                    if (!isOpen) {
+                        filterPanel.classList.remove('hidden');
+                    }
+                });
+
+                sortPanel.querySelectorAll('[data-sort-dir]').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const selected = sortSelect.value;
+                        if (selected === '') {
+                            state.sort.columnIndex = null;
+                            state.sort.direction = null;
+                        } else {
+                            state.sort.columnIndex = Number(selected);
+                            state.sort.direction = btn.getAttribute('data-sort-dir');
+                        }
+                        state.currentPage = 1;
+                        state.render();
+                        refreshSummary();
+                        hidePanels();
+                    });
+                });
+
+                filterPanel.querySelector('[data-filter-apply]').addEventListener('click', () => {
+                    const selected = Number(filterSelect.value);
+                    const value = (filterInput.value || '').trim().toLowerCase();
+                    if (!Number.isNaN(selected)) {
+                        if (value) {
+                            state.filters.set(selected, value);
+                        } else {
+                            state.filters.delete(selected);
+                        }
+                    }
+                    state.currentPage = 1;
+                    state.render();
+                    refreshSummary();
+                    hidePanels();
+                });
+
+                filterPanel.querySelector('[data-filter-clear]').addEventListener('click', () => {
+                    const selected = Number(filterSelect.value);
+                    if (!Number.isNaN(selected)) {
+                        state.filters.delete(selected);
+                    }
+                    filterInput.value = '';
+                    state.currentPage = 1;
+                    state.render();
+                    refreshSummary();
+                    hidePanels();
+                });
+
+                clearBtn.addEventListener('click', () => {
+                    state.sort.columnIndex = null;
+                    state.sort.direction = null;
+                    state.filters.clear();
+                    state.currentPage = 1;
+                    state.render();
+                    refreshSummary();
+                    hidePanels();
+                });
+
+                document.addEventListener('click', (event) => {
+                    if (!toolbar.contains(event.target)) {
+                        hidePanels();
+                    }
+                });
+
+                toolbar.append(sortBtn, filterBtn, clearBtn, sortPanel, filterPanel);
+                refreshSummary();
+                state.refreshSummary = refreshSummary;
+            };
+
+            document.querySelectorAll('table[data-admin-table]').forEach((table) => {
+                const tbody = table.querySelector('[data-paged-table-body]');
+                if (!tbody) return;
+
+                const tableContainer = tbody.closest('.overflow-x-auto');
+                const controls = tableContainer?.parentElement?.querySelector('[data-paged-table-controls]');
+
+                const rows = Array.from(tbody.querySelectorAll('[data-paged-row]'));
+                const headers = Array.from(table.querySelectorAll('thead th'));
+                const defaultPageSize = Number.parseInt(tbody.getAttribute('data-page-size') || '20', 10);
+                const initialPageSize = controls ? defaultPageSize : Math.max(defaultPageSize, rows.length || 1);
+
+                const state = {
+                    currentPage: 1,
+                    pageSize: initialPageSize,
+                    sort: { columnIndex: null, direction: null },
+                    filters: new Map(),
+                    refreshSummary: () => { },
+                    render: () => { }
+                };
+
+                const getFilteredAndSortedRows = () => {
+                    let working = rows.filter((row) => {
+                        return Array.from(state.filters.entries()).every(([columnIndex, filterValue]) => {
+                            const cellText = row.children[columnIndex]?.textContent?.toLowerCase() || '';
+                            return cellText.includes(filterValue);
+                        });
+                    });
+
+                    if (state.sort.columnIndex !== null && state.sort.direction) {
+                        const columnIndex = state.sort.columnIndex;
+                        const type = headers[columnIndex]?.getAttribute('data-col-type') || 'text';
+                        const direction = state.sort.direction === 'asc' ? 1 : -1;
+
+                        working = working.slice().sort((a, b) => {
+                            const leftText = a.children[columnIndex]?.textContent || '';
+                            const rightText = b.children[columnIndex]?.textContent || '';
+                            const left = parseCellValue(leftText, type);
+                            const right = parseCellValue(rightText, type);
+
+                            if (left === null && right === null) return 0;
+                            if (left === null) return 1;
+                            if (right === null) return -1;
+                            if (left < right) return -1 * direction;
+                            if (left > right) return 1 * direction;
+                            return 0;
+                        });
+                    }
+
+                    return working;
+                };
+
+                state.render = () => {
+                    const visibleRows = getFilteredAndSortedRows();
+                    const totalPages = Math.max(1, Math.ceil(visibleRows.length / state.pageSize));
+                    if (state.currentPage > totalPages) state.currentPage = totalPages;
+
+                    rows.forEach((row) => row.classList.add('hidden'));
+                    visibleRows.forEach((row) => tbody.appendChild(row));
+
+                    const start = (state.currentPage - 1) * state.pageSize;
+                    const end = start + state.pageSize;
+                    visibleRows.forEach((row, index) => {
+                        row.classList.toggle('hidden', index < start || index >= end);
+                    });
+
+                    if (controls) {
+                        controls.innerHTML = '';
+                        controls.className = 'mt-3 flex flex-wrap items-center justify-between gap-3';
+
+                        const pager = document.createElement('div');
+                        pager.className = 'flex flex-wrap items-center gap-2';
+
+                        const buildPageButton = (page) => {
+                            const button = document.createElement('button');
+                            button.type = 'button';
+                            button.setAttribute('data-page-number', String(page));
+                            button.textContent = String(page);
+                            button.className = page === state.currentPage
+                                ? 'rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white'
+                                : 'rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100';
+                            button.addEventListener('click', () => {
+                                state.currentPage = page;
+                                state.render();
+                            });
+                            return button;
+                        };
+
+                        if (totalPages <= 5) {
+                            for (let page = 1; page <= totalPages; page += 1) {
+                                pager.appendChild(buildPageButton(page));
+                            }
+                        } else {
+                            const pagesToShow = Array.from(new Set([
+                                1,
+                                state.currentPage,
+                                Math.min(state.currentPage + 1, totalPages),
+                                totalPages
+                            ])).sort((a, b) => a - b);
+
+                            pagesToShow.forEach((page, index) => {
+                                if (index > 0 && page - pagesToShow[index - 1] > 1) {
+                                    const dots = document.createElement('span');
+                                    dots.className = 'px-1 text-xs font-semibold text-slate-500';
+                                    dots.textContent = '...';
+                                    pager.appendChild(dots);
+                                }
+                                pager.appendChild(buildPageButton(page));
+                            });
+                        }
+
+                        const pageSizeWrap = document.createElement('div');
+                        pageSizeWrap.className = 'ml-auto inline-flex items-center gap-2 text-xs text-slate-700';
+                        pageSizeWrap.innerHTML = `
+                            <label for="page-size-${table.getAttribute('data-admin-table')}">Filas por página</label>
+                            <select id="page-size-${table.getAttribute('data-admin-table')}" class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        `;
+
+                        const pageSizeSelect = pageSizeWrap.querySelector('select');
+                        if (pageSizeSelect) {
+                            pageSizeSelect.value = String(state.pageSize);
+                            pageSizeSelect.addEventListener('change', () => {
+                                const nextSize = Number.parseInt(pageSizeSelect.value, 10);
+                                if (Number.isFinite(nextSize) && nextSize > 0) {
+                                    state.pageSize = nextSize;
+                                    state.currentPage = 1;
+                                    state.render();
+                                }
+                            });
+                        }
+
+                        controls.append(pager, pageSizeWrap);
+                    }
+                    state.refreshSummary();
+                };
+
+                createToolbar(table.getAttribute('data-admin-table'), headers, state);
+                headers.forEach((th, index) => decorateHeader(th, index, state));
+                state.render();
+            });
+
+            if (window.lucide?.createIcons) {
+                window.lucide.createIcons();
+            }
         })();
     </script>
 }
-

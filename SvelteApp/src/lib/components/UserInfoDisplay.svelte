@@ -5,6 +5,8 @@
   let isSaving = $state(false);
   let saveError = $state("");
   let profile = $state(customer);
+  const bookingRowsLimit = 8;
+  let showAllBookings = $state(false);
   let form = $state({
     firstName: "",
     lastName: "",
@@ -232,38 +234,44 @@
         <button
           type="button"
           class="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100"
-          onclick={() => (showBookings = false)}>Cerrar</button
+          onclick={() => {
+            showBookings = false;
+            showAllBookings = false;
+          }}>Cerrar</button
         >
       </div>
 
       {#if profile?.bookings?.length > 0}
         <div class="max-h-80 overflow-auto rounded-md border border-slate-200">
           <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50 text-left text-slate-600">
+            <thead class="bg-slate-50 text-center text-slate-700 ">
               <tr>
                 <th class="px-3 py-2 font-semibold">Fecha</th>
                 <th class="px-3 py-2 font-semibold">Comienza</th>
                 <th class="px-3 py-2 font-semibold">Concluye</th>
                 <th class="px-3 py-2 font-semibold">Duración</th>
                 <th class="px-3 py-2 font-semibold">Scooters</th>
-                <th class="px-3 py-2 font-semibold">E-bikes</th>
-                <th class="px-3 py-2 font-semibold">Estado</th>
-                <th class="px-3 py-2 font-semibold">Nota admin</th>
-                <th class="px-3 py-2 font-semibold"></th>
+                <th class="min-w-[70px] px-3 py-2 font-semibold">E-bikes</th>
+                <th class="px-3 py-2 font-semibold">Total estimado</th>
+                <!-- <th class="px-3 py-2 font-semibold">Estado</th> -->
+                <!-- <th class="px-3 py-2 font-semibold">Nota admin</th> -->
+                <!-- <th class="px-3 py-2 font-semibold"></th> -->
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              {#each profile.bookings as booking}
-                <tr>
+              {#each profile.bookings as booking, index}
+                {#if showAllBookings || index < bookingRowsLimit}
+                <tr class="odd:bg-white even:bg-slate-50 text-center">
                   <td class="px-3 py-2 text-slate-700">{new Date(booking.requestedStart).toLocaleDateString("es-PR")}</td>
-                  <td class="px-3 py-2 text-slate-700">{new Date(booking.requestedStart).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit" })}</td>
-                  <td class="px-3 py-2 text-slate-700">{booking.requestedEnd ? new Date(booking.requestedEnd).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit" }) : "-"}</td>
+                  <td class="min-w-[100px] px-3 py-2 text-slate-700 whitespace-nowrap">{new Date(booking.requestedStart).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit"})}</td>                  
+                  <td class="min-w-[100px] px-3 py-2 text-slate-700">{booking.requestedEnd ? new Date(booking.requestedEnd).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit" }) : "-"}</td>
                   <td class="px-3 py-2 text-slate-700">{booking.requestedEnd ? Math.round((new Date(booking.requestedEnd) - new Date(booking.requestedStart)) / 3600000) : "-"} h</td>
                   <td class="px-3 py-2 text-slate-700">{booking.scooterQuantity}</td>
                   <td class="px-3 py-2 text-slate-700">{booking.ebikeQuantity}</td>
-                  <td class="px-3 py-2 font-medium text-slate-800">{booking.status}</td>
-                  <td class="px-3 py-2 text-slate-600">{booking.adminNotes || "-"}</td>
-                  <td class="px-3 py-2 text-right">
+                  <td class="px-3 py-2 text-slate-700">${booking.estimatedTotal.toFixed(2)}</td>
+                  <!-- <td class="px-3 py-2 font-medium text-slate-800">{booking.status}</td> -->
+                  <!-- <td class="px-3 py-2 text-slate-600">{booking.adminNotes || "-"}</td> -->
+                  <!-- <td class="px-3 py-2 text-right">
                     {#if booking.canDelete}
                       <a
                         class="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200"
@@ -288,15 +296,28 @@
                         </a>
                       </div>
                     {/if}
-                  </td>
+                  </td> -->
                 </tr>
+                {/if}
               {/each}
             </tbody>
           </table>
         </div>
+        {#if profile.bookings.length > bookingRowsLimit}
+          <div class="mt-3 flex justify-end">
+            <button
+              type="button"
+              class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+              onclick={() => (showAllBookings = !showAllBookings)}
+            >
+              {showAllBookings ? "Ver menos" : "Ver más"}
+            </button>
+          </div>
+        {/if}
       {:else}
-        <p class="text-sm text-slate-600">No tienes reservas registradas.</p>
+        <p class="text-sm text-slate-600 text-center">No tienes reservas registradas.</p>
       {/if}
     </div>
   </div>
 {/if}
+

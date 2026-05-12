@@ -16,4 +16,17 @@ public class AdminCustomerListItemViewModel
     public string? HowDidYouHear { get; set; }
     public bool AuthorizeRecontact { get; set; }
     public DateTime CreatedAt { get; set; }
+    public IReadOnlyList<AdminCustomerBookingHistoryItemViewModel> Bookings { get; set; } = [];
+}
+
+public class AdminCustomerBookingHistoryItemViewModel
+{
+    public long Id { get; set; }
+    public DateTime RequestedStart { get; set; }
+    public DateTime? RequestedEnd { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public int ScooterQuantity { get; set; }
+    public int EbikeQuantity { get; set; }
+    public decimal? EstimatedTotal { get; set; }
+    public string? AdminNotes { get; set; }
 }

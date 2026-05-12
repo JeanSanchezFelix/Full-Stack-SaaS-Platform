@@ -31,6 +31,7 @@ public class AccountsController(AppDbContext dbContext) : Controller
                 RequestedEnd = booking.RequestedEnd,
                 ScooterQuantity = booking.ScooterQuantity,
                 EbikeQuantity = booking.EbikeQuantity,
+                EstimatedTotal = booking.EstimatedTotal,
                 Status = NormalizeStatus(booking.Status),
                 AdminNotes = NormalizeAdminNotes(booking.AdminNotes)
             })
@@ -54,7 +55,21 @@ public class AccountsController(AppDbContext dbContext) : Controller
                 ElectronicSignature = customer.ElectronicSignature,
                 HowDidYouHear = customer.HowDidYouHear,
                 AuthorizeRecontact = customer.AuthorizeRecontact,
-                CreatedAt = customer.CreatedAt
+                CreatedAt = customer.CreatedAt,
+                Bookings = customer.Bookings
+                    .OrderByDescending(booking => booking.CreatedAt)
+                    .Select(booking => new AdminCustomerBookingHistoryItemViewModel
+                    {
+                        Id = booking.Id,
+                        RequestedStart = booking.RequestedStart,
+                        RequestedEnd = booking.RequestedEnd,
+                        Status = NormalizeStatus(booking.Status),
+                        ScooterQuantity = booking.ScooterQuantity,
+                        EbikeQuantity = booking.EbikeQuantity,
+                        EstimatedTotal = booking.EstimatedTotal,
+                        AdminNotes = NormalizeAdminNotes(booking.AdminNotes)
+                    })
+                    .ToList()
             })
             .ToListAsync();
 
@@ -77,18 +92,16 @@ public class AccountsController(AppDbContext dbContext) : Controller
 
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Clientes");
-        ws.Cell(1, 1).Value = "Id";
-        ws.Cell(1, 2).Value = "Código de cliente";
-        ws.Cell(1, 3).Value = "Nombre";
-        ws.Cell(1, 4).Value = "Número de licencia";
-        ws.Cell(1, 5).Value = "Número de teléfono";
-        ws.Cell(1, 6).Value = "Email";
-        ws.Cell(1, 7).Value = "Pueblo";
-        ws.Cell(1, 8).Value = "País";
-        ws.Cell(1, 9).Value = "Firma electrónica";
-        ws.Cell(1, 10).Value = "¿Cómo escuchaste de nosotros?";
-        ws.Cell(1, 11).Value = "Autoriza recontacto";
-        ws.Cell(1, 12).Value = "Cuenta creada en";
+        ws.Cell(1, 1).Value = "Nombre";
+        ws.Cell(1, 2).Value = "Número de licencia";
+        ws.Cell(1, 3).Value = "Número de teléfono";
+        ws.Cell(1, 4).Value = "Email";
+        ws.Cell(1, 5).Value = "Pueblo";
+        ws.Cell(1, 6).Value = "País";
+        ws.Cell(1, 7).Value = "Firma electrónica";
+        ws.Cell(1, 8).Value = "¿Cómo escuchaste de nosotros?";
+        ws.Cell(1, 9).Value = "Autoriza recontacto";
+        ws.Cell(1, 10).Value = "Cuenta creada en";
 
         ws.Row(1).Style.Font.Bold = true;
         ws.SheetView.FreezeRows(1);
@@ -96,34 +109,34 @@ public class AccountsController(AppDbContext dbContext) : Controller
         var row = 2;
         foreach (var customer in customers)
         {
-            ws.Cell(row, 1).Value = customer.Id;
-            ws.Cell(row, 2).Value = customer.CustomerCode;
-            ws.Cell(row, 3).Value = customer.FirstName + " " + customer.LastName;
-            ws.Cell(row, 4).Value = customer.LicenseNumber;
-            ws.Cell(row, 5).Value = customer.PhoneNumber;
-            ws.Cell(row, 6).Value = customer.Email ?? string.Empty;
-            ws.Cell(row, 7).Value = customer.City;
-            ws.Cell(row, 8).Value = customer.Country;
-            ws.Cell(row, 9).Value = string.Empty;
-            ws.Cell(row, 10).Value = customer.HowDidYouHear ?? string.Empty;
-            ws.Cell(row, 11).Value = customer.AuthorizeRecontact ? "Sí" : "No";
-            ws.Cell(row, 12).Value = customer.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+            ws.Cell(row, 1).Value = customer.FirstName + " " + customer.LastName;
+            ws.Cell(row, 2).Value = customer.LicenseNumber;
+            ws.Cell(row, 3).Value = customer.PhoneNumber;
+            ws.Cell(row, 4).Value = customer.Email ?? string.Empty;
+            ws.Cell(row, 5).Value = customer.City;
+            ws.Cell(row, 6).Value = customer.Country;
+            ws.Cell(row, 7).Value = string.Empty;
+            ws.Cell(row, 8).Value = customer.HowDidYouHear ?? string.Empty;
+            ws.Cell(row, 9).Value = customer.AuthorizeRecontact ? "Sí" : "No";
+            ws.Cell(row, 10).Value = customer.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
 
             if (TryGetSignaturePngBytes(customer.ElectronicSignature, out var signatureBytes))
             {
                 using var signatureStream = new MemoryStream(signatureBytes);
                 var picture = ws.AddPicture(signatureStream, $"signature-{customer.Id}");
-                picture.MoveTo(ws.Cell(row, 9), 4, 4);
+                picture.MoveTo(ws.Cell(row, 7), 4, 4);
                 picture.WithSize(180, 56);
                 ws.Row(row).Height = 46;
             }
 
             row++;
         }
-
-        ws.Columns(1, 8).AdjustToContents();
-        ws.Column(9).Width = 28;
-        ws.Columns(10, 12).AdjustToContents();
+        ws.Row(1).Style.Font.Bold = true;
+        ws.Columns(1, 6).AdjustToContents();
+        ws.Column(7).Width = 25;
+        ws.Column(8).AdjustToContents();
+        ws.Column(9).AdjustToContents();
+        ws.Column(10).AdjustToContents();
 
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
@@ -132,6 +145,102 @@ public class AccountsController(AppDbContext dbContext) : Controller
             stream.ToArray(),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"clientes-{DateTime.UtcNow:yyyyMMdd-HHmmss}.xlsx");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportBookings()
+    {
+        var bookings = await dbContext.Bookings
+            .AsNoTracking()
+            .Include(booking => booking.Customer)
+            .OrderByDescending(booking => booking.CreatedAt)
+            .ToListAsync();
+
+        using var workbook = new XLWorkbook();
+        var ws = workbook.Worksheets.Add("Reservas");
+        ws.Cell(1, 1).Value = "Nombre de cliente";
+        ws.Cell(1, 2).Value = "Licencia";
+        ws.Cell(1, 3).Value = "Comienza";
+        ws.Cell(1, 4).Value = "Concluye";
+        ws.Cell(1, 5).Value = "Scooters";
+        ws.Cell(1, 6).Value = "E-bikes";
+        ws.Cell(1, 7).Value = "Total estimado";
+        // ws.Cell(1, 10).Value = "Estado";
+        // ws.Cell(1, 11).Value = "Nota admin";
+        ws.Cell(1, 8).Value = "Reserva creada en";
+
+        ws.Row(1).Style.Font.Bold = true;
+        ws.SheetView.FreezeRows(1);
+
+        var row = 2;
+        foreach (var booking in bookings)
+        {
+            var customerName = booking.Customer == null
+                ? "Cliente"
+                : $"{booking.Customer.FirstName} {booking.Customer.LastName}".Trim();
+
+            ws.Cell(row, 1).Value = customerName;
+            ws.Cell(row, 2).Value = booking.Customer?.LicenseNumber ?? string.Empty;
+            ws.Cell(row, 3).Value = booking.RequestedStart.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+            ws.Cell(row, 4).Value = booking.RequestedEnd?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-";
+            ws.Cell(row, 5).Value = booking.ScooterQuantity;
+            ws.Cell(row, 6).Value = booking.EbikeQuantity;
+            ws.Cell(row, 7).Value = booking.EstimatedTotal;
+            // ws.Cell(row, 10).Value = NormalizeStatus(booking.Status);
+            // ws.Cell(row, 11).Value = NormalizeAdminNotes(booking.AdminNotes) ?? string.Empty;
+            ws.Cell(row, 8).Value = booking.CreatedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-";
+            row++;
+        }
+
+        ws.Columns(1, 8).AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Position = 0;
+        return File(
+            stream.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"reservas-{DateTime.UtcNow:yyyyMMdd-HHmmss}.xlsx");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteCustomer(long id, string tab = "clients")
+    {
+        var customer = await dbContext.Customers
+            .FirstOrDefaultAsync(existingCustomer => existingCustomer.Id == id);
+
+        if (customer is null)
+        {
+            TempData["BookingRejectedError"] = "No encontramos el cliente que intentaste eliminar.";
+            return RedirectToAction(nameof(Admin), new { tab });
+        }
+
+        dbContext.Customers.Remove(customer);
+        await dbContext.SaveChangesAsync();
+
+        TempData["BookingApproved"] = $"Cliente {customer.FirstName} {customer.LastName} eliminado junto con sus reservas.";
+        return RedirectToAction(nameof(Admin), new { tab });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteBooking(long id, string tab = "bookings")
+    {
+        var booking = await dbContext.Bookings
+            .FirstOrDefaultAsync(existingBooking => existingBooking.Id == id);
+
+        if (booking is null)
+        {
+            TempData["BookingRejectedError"] = "No encontramos la reserva que intentaste eliminar.";
+            return RedirectToAction(nameof(Admin), new { tab });
+        }
+
+        dbContext.Bookings.Remove(booking);
+        await dbContext.SaveChangesAsync();
+
+        TempData["BookingApproved"] = "Reserva eliminada correctamente.";
+        return RedirectToAction(nameof(Admin), new { tab });
     }
 
     public new async Task<IActionResult> User(string? licenseNumber = null)
@@ -371,7 +480,7 @@ public class AccountsController(AppDbContext dbContext) : Controller
         customer.FirstName = request.FirstName.Trim();
         customer.LastName = request.LastName.Trim();
         customer.LicenseNumber = cleanedLicense;
-        customer.PhoneNumber = cleanedPhone;
+        customer.PhoneNumber = cleanedPhone ?? string.Empty;
         customer.Email = cleanedEmail;
         customer.City = request.City.Trim();
         customer.Country = request.Country.Trim();

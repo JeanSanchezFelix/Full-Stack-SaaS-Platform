@@ -9,6 +9,7 @@ public class BookingListItemViewModel
     public DateTime? RequestedEnd { get; set; }
     public int ScooterQuantity { get; set; }
     public int EbikeQuantity { get; set; }
+    public decimal? EstimatedTotal { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? AdminNotes { get; set; }
 }
