@@ -4,6 +4,7 @@ using SvelteHybridMVC.Infrastructure.Data;
 using SvelteHybridMVC.Models;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace SvelteHybridMVC.Controllers;
 
@@ -11,6 +12,8 @@ public class CustomersController : Controller
 {
     private readonly AppDbContext _dbContext;
     private const string TempDataCookieName = ".AspNetCore.Mvc.CookieTempDataProvider";
+    private const string IntakeModelTempDataKey = "CustomerIntake.Model";
+    private const string IntakeErrorsTempDataKey = "CustomerIntake.Errors";
 
     public CustomersController(AppDbContext dbContext)
     {
@@ -23,12 +26,26 @@ public class CustomersController : Controller
         // Clear stale oversized temp-data cookie payloads that can cause HTTP 431.
         Response.Cookies.Delete(TempDataCookieName);
 
-        return View(new CustomerIntakeViewModel
+        var model = ReadIntakeModelFromTempData() ?? new CustomerIntakeViewModel
         {
             Country = "Puerto Rico",
             LicenseNumber = licenseNumber,
             ReturnUrl = returnUrl
-        });
+        };
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+        {
+            model.ReturnUrl = returnUrl;
+        }
+
+        if (!string.IsNullOrWhiteSpace(licenseNumber))
+        {
+            model.LicenseNumber = licenseNumber;
+        }
+
+        ApplyModelStateErrorsFromTempData();
+
+        return View(model);
     }
 
     [HttpGet]
@@ -88,7 +105,13 @@ public class CustomersController : Controller
 
         if (!ModelState.IsValid)
         {
-            return View(model);
+            StoreIntakeModelInTempData(model);
+            StoreModelStateErrorsInTempData();
+            return RedirectToAction(nameof(Create), new
+            {
+                returnUrl = model.ReturnUrl,
+                licenseNumber = model.LicenseNumber
+            });
         }
 
         var customer = new Customer
@@ -237,6 +260,74 @@ public class CustomersController : Controller
         {
             bytes = [];
             return false;
+        }
+    }
+
+    private void StoreIntakeModelInTempData(CustomerIntakeViewModel model)
+    {
+        TempData[IntakeModelTempDataKey] = JsonSerializer.Serialize(model);
+    }
+
+    private CustomerIntakeViewModel? ReadIntakeModelFromTempData()
+    {
+        if (TempData[IntakeModelTempDataKey] is not string raw || string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<CustomerIntakeViewModel>(raw);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void StoreModelStateErrorsInTempData()
+    {
+        var errors = ModelState
+            .Where(entry => entry.Value is { Errors.Count: > 0 })
+            .ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value!.Errors
+                    .Select(error => error.ErrorMessage)
+                    .Where(message => !string.IsNullOrWhiteSpace(message))
+                    .ToArray());
+
+        TempData[IntakeErrorsTempDataKey] = JsonSerializer.Serialize(errors);
+    }
+
+    private void ApplyModelStateErrorsFromTempData()
+    {
+        if (TempData[IntakeErrorsTempDataKey] is not string raw || string.IsNullOrWhiteSpace(raw))
+        {
+            return;
+        }
+
+        try
+        {
+            var errors = JsonSerializer.Deserialize<Dictionary<string, string[]>>(raw);
+            if (errors is null)
+            {
+                return;
+            }
+
+            foreach (var (key, messages) in errors)
+            {
+                foreach (var message in messages)
+                {
+                    if (!string.IsNullOrWhiteSpace(message))
+                    {
+                        ModelState.AddModelError(key, message);
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Ignore malformed temp-data payloads.
         }
     }
 }

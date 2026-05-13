@@ -790,11 +790,3 @@ public class AccountsController(AppDbContext dbContext, AdminPasswordHasher pass
             && bytes[7] == 0x0A;
     }
 }
-
-
-
-
-
-
-
-

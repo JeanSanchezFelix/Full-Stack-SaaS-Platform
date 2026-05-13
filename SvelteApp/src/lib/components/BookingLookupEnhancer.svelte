@@ -76,7 +76,7 @@
   });
 </script>
 
-<aside class="mb-6 rounded-md border border-slate-200 bg-slate-50 px-4 py-4">
+<!-- <aside class="mb-6 rounded-md border border-slate-200 bg-slate-50 px-4 py-4">
   <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
     <div>
       <p class="text-sm font-semibold text-slate-900">Busqueda por licencia</p>
@@ -107,4 +107,4 @@
       {/each}
     </div>
   {/if}
-</aside>
+</aside> -->

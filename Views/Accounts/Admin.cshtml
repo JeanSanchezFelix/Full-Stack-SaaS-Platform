@@ -65,24 +65,35 @@
             });
 }
 
-<section class="mx-auto max-w-6xl">
-    <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-            <h1 class="text-3xl font-bold tracking-normal text-slate-950">Panel de Administración</h1>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Supervisa el historial de reservas y los perfiles creados.</p>
-        </div>
-        <div class=" rounded-md border border-slate-200 bg-white p-3 text-sm shadow-sm md:w-80">
-            <div class="flex items-center justify-between gap-3">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Admin conectado</p>
-                    <p class="mt-1 break-words font-bold text-slate-950">@Model.AdminUserName</p>
-                </div>
-                <form asp-action="AdminLogout" method="post">
-                    <button type="submit" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">
-                        Salir
-                    </button>
-                </form>
+<section class="mx-auto max-w-6xl min-h-screen">
+<div class="mb-8 flex flex-col gap-4 min-[484px]:flex-row min-[484px]:items-start min-[484px]:justify-between">
+    <div class="flex-1">
+        <h1 class="text-3xl font-bold tracking-normal text-slate-950">
+            Panel de Administración
+        </h1>
+        <p class="mt-2 text-sm leading-6 text-slate-600">
+            Supervisa el historial de reservas y los perfiles creados.
+        </p>
+    </div>
+
+    <div class="w-full min-[484px]:max-w-xs rounded-md border border-slate-200 bg-white p-3 text-sm shadow-sm">
+        <div class="flex items-center justify-between gap-3">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Admin conectado
+                </p>
+                <p class="mt-1 break-words font-bold text-slate-950">
+                    @Model.AdminUserName
+                </p>
             </div>
+
+            <form asp-action="AdminLogout" method="post">
+                <button type="submit"
+                        class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                    Salir
+                </button>
+            </form>
+        </div>
             @* <div class="mt-3 space-y-2 border-t border-slate-100 pt-3">
                 <details class="rounded-md border border-slate-200 bg-slate-50 p-2">
                     <summary class="cursor-pointer text-xs font-semibold text-slate-700">Cambiar usuario</summary>

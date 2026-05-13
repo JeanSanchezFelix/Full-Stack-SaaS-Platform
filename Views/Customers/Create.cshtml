@@ -208,6 +208,39 @@
     const signatureCtx = signatureCanvas?.getContext('2d');
     let isDrawing = false;
     let hasSignature = false;
+    const requiredFieldMessages = {
+        FirstName: 'El nombre es requerido.',
+        LastName: 'El apellido es requerido.',
+        LicenseNumber: 'El numero de licencia es requerido.',
+        PhoneNumber: 'El numero de telefono es requerido.',
+        City: 'El pueblo de procedencia es requerido.',
+        Country: 'El pais es requerido.'
+    };
+
+    const getFieldErrorElement = (fieldName) => {
+        const field = form?.querySelector(`[name="${fieldName}"]`);
+        if (!field) return null;
+        return field.closest('div')?.querySelector('span.mt-1.block.text-sm.text-red-600') ?? null;
+    };
+
+    const syncRequiredFieldError = (fieldName) => {
+        const field = form?.querySelector(`[name="${fieldName}"]`);
+        const errorElement = getFieldErrorElement(fieldName);
+        if (!field || !errorElement) return true;
+
+        const isValid = String(field.value ?? '').trim().length > 0;
+        errorElement.textContent = isValid ? '' : (requiredFieldMessages[fieldName] ?? 'Este campo es requerido.');
+        return isValid;
+    };
+
+    const syncAllRequiredFieldErrors = () => {
+        let allValid = true;
+        Object.keys(requiredFieldMessages).forEach((fieldName) => {
+            const isValid = syncRequiredFieldError(fieldName);
+            allValid = allValid && isValid;
+        });
+        return allValid;
+    };
 
     const syncWaiverClientError = () => {
         if (!waiverCheckbox || !waiverClientError) return;
@@ -309,8 +342,22 @@
 
     waiverCheckbox?.addEventListener('change', syncWaiverClientError);
     waiverCheckbox?.addEventListener('change', syncSignatureLock);
+    Object.keys(requiredFieldMessages).forEach((fieldName) => {
+        const field = form?.querySelector(`[name="${fieldName}"]`);
+        field?.addEventListener('input', () => syncRequiredFieldError(fieldName));
+        field?.addEventListener('blur', () => syncRequiredFieldError(fieldName));
+    });
 
     form.addEventListener('submit', (e) => {
+        const requiredFieldsValid = syncAllRequiredFieldErrors();
+        if (!requiredFieldsValid) {
+            e.preventDefault();
+            const firstMissingFieldName = Object.keys(requiredFieldMessages)
+                .find((fieldName) => !String(form?.querySelector(`[name="${fieldName}"]`)?.value ?? '').trim().length);
+            form?.querySelector(`[name="${firstMissingFieldName}"]`)?.focus();
+            return;
+        }
+
         const waiverChecked = waiverCheckbox?.checked;
         if (!waiverChecked) {
             e.preventDefault();

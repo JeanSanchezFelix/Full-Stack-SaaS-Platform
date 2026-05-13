@@ -25,6 +25,7 @@
     <textarea
       id={fieldName}
       name={fieldName}
+      required={required}
       rows={rows}
       class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
     >{value || ''}</textarea>
@@ -33,6 +34,7 @@
       id={fieldName}
       name={fieldName}
       type={type}
+      required={required}
       class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
       value={value || ''}
     />

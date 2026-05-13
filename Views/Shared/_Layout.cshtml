@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es" dir="ltr">
 
 <head>
@@ -71,10 +71,10 @@
 
         <footer class="border-t border-grey/5 bg-slate-50 text-gray-400">
 
-            <!-- TOP AREA (5 columns: brand spans 2, links span 3 → inner 4 columns) -->
+            <!-- TOP AREA (5 columns: brand spans 2, links span 3 â†’ inner 4 columns) -->
             <div class="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-2 lg:grid-cols-5">
 
-                <!-- Column 1: Brand – wider on large screens -->
+                <!-- Column 1: Brand â€“ wider on large screens -->
                 <div class="lg:col-span-2 space-y-6">
 
                     <!-- Logo -->
@@ -200,10 +200,20 @@
                     <div>
                         <h3 class="mb-4 font-semibold text-black">Links</h3>
                         <ul class="space-y-3 text-sm">
-                            <li><a href="#about" class="hover:text-[#EB6A38] transition">About</a></li>
-                            <li><a href="#scooters" class="hover:text-[#EB6A38] transition">Scooters</a></li>
-                            <li><a href="#pricing" class="hover:text-[#EB6A38] transition">Pricing</a></li>
-                            <li><a href="#contact" class="hover:text-[#EB6A38] transition">Contact</a></li>
+                            <li>
+                                <a href="@Url.Action("Create", "Customers")"
+                                   data-popup-url="@Url.Action("Create", "Customers")"
+                                   data-popup-title="Registro"
+                                   class="hover:text-[#EB6A38] transition">Regístrate</a>
+                            </li>
+                            <li>
+                                <a href="@Url.Action("Create", "Bookings")"
+                                   data-popup-url="@Url.Action("Create", "Bookings")"
+                                   data-popup-title="Reserva"
+                                   class="hover:text-[#EB6A38] transition">Reserva</a>
+                            </li>
+                            @* <li><a href="#pricing" class="hover:text-[#EB6A38] transition">Pricing</a></li>
+                            <li><a href="#contact" class="hover:text-[#EB6A38] transition">Contact</a></li> *@
                         </ul>
                     </div>
 
@@ -211,9 +221,19 @@
                     <div>
                         <h3 class="mb-4 font-semibold text-black">Info</h3>
                         <ul class="space-y-3 text-sm">
-                            <li>Política de privacidad</li>
-                            <li>Términos de servicio</li>
-                            <li>FAQs</li>
+                            <li>
+                                <a href="@Url.Action("LiabilityWaiver", "Customers")"
+                                   data-popup-url="@Url.Action("LiabilityWaiver", "Customers")"
+                                   data-popup-title="Relevo de Responsabilidad"
+                                   class="hover:text-[#EB6A38] transition">Relevo de Responsabilidad</a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                   data-privacy-popup-trigger="true"
+                                   class="hover:text-[#EB6A38] transition">Política de privacidad</a>
+                            </li>
+                            @* <li>Términos de servicio</li> *@
+                            @* <li>FAQs</li> *@
                         </ul>
                     </div>
 
@@ -225,7 +245,7 @@
                 <div
                     class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-6 text-sm text-black-500 md:flex-row">
                     <p>
-                        &copy; @DateTime.Now.Year <strong class="text-black-300">Scooter de la Bahía</strong> — Todos
+                        &copy; @DateTime.Now.Year <strong class="text-black-300">Relevo de Responsabilidad</strong> â€” Todos
                         los derechos reservados
                     </p>
                 </div>
@@ -233,8 +253,79 @@
         </footer>
     </div>
 
+    
+    <div id="privacy-popup-overlay" class="fixed inset-0 z-[70] hidden items-center justify-center bg-black/50 p-4" aria-hidden="true">
+        <div class="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                <h2 class="text-base font-semibold text-slate-900">Política de privacidad</h2>
+                <button id="privacy-popup-close" type="button" class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100">
+                    Cerrar
+                </button>
+            </div>
+            <div class="space-y-4 px-5 py-4 text-sm leading-6 text-slate-700">
+                <p>
+                    En Scooter de la Bahía protegemos su información personal. Solo recopilamos datos necesarios para
+                    registro, reservas, contacto y servicio al cliente.
+                </p>
+                <p>
+                    No compartimos su información con terceros para fines no relacionados al servicio. Puede solicitar
+                    actualización o eliminación de sus datos comunicándose con nosotros por correo o teléfono.
+                </p>
+                <p>
+                    Al usar este sitio, usted acepta esta política y el uso de su información para operar reservas y
+                    brindar soporte.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const trigger = document.querySelector('a[data-privacy-popup-trigger="true"]');
+            const overlay = document.getElementById('privacy-popup-overlay');
+            const closeButton = document.getElementById('privacy-popup-close');
+
+            if (!overlay || !closeButton || !trigger) {
+                return;
+            }
+
+            const openPopup = () => {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+                overlay.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('overflow-hidden');
+            };
+
+            const closePopup = () => {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+                overlay.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('overflow-hidden');
+            };
+
+            trigger.addEventListener('click', (event) => {
+                event.preventDefault();
+                openPopup();
+            });
+
+            closeButton.addEventListener('click', closePopup);
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) {
+                    closePopup();
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !overlay.classList.contains('hidden')) {
+                    closePopup();
+                }
+            });
+        })();
+    </script>
     <script src="~/_svelte/client.js" type="module" defer asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 
 </html>
+
+
