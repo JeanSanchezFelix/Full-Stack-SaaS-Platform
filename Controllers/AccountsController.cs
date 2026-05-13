@@ -1,19 +1,159 @@
 using ClosedXML.Excel;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SvelteHybridMVC.Infrastructure.Data;
+using SvelteHybridMVC.Infrastructure.Security;
 using SvelteHybridMVC.Models;
 using System.Net.Mail;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 
 namespace SvelteHybridMVC.Controllers;
 
-public class AccountsController(AppDbContext dbContext) : Controller
+public class AccountsController(AppDbContext dbContext, AdminPasswordHasher passwordHasher) : Controller
 {
     private const string LicenseCookieName = "sb_license";
     private const string CustomerCodeCookieName = "sb_customer_code";
     private const string ReconfirmPrefix = "[RECONFIRM]";
 
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult AdminLogin(string? returnUrl = null)
+    {
+        if (HttpContext.User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToLocal(returnUrl);
+        }
+
+        return View(new AdminLoginViewModel
+        {
+            ReturnUrl = string.IsNullOrWhiteSpace(returnUrl) ? Url.Action(nameof(Admin)) : returnUrl
+        });
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdminLogin(AdminLoginViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var userName = model.UserName.Trim();
+        var normalizedUserName = userName.ToLowerInvariant();
+        var adminUser = await dbContext.AdminUsers
+            .FirstOrDefaultAsync(existingUser => existingUser.UserName.ToLower() == normalizedUserName);
+
+        if (adminUser is null || !passwordHasher.VerifyPassword(model.Password, adminUser.Salt, adminUser.PasswordHash))
+        {
+            ModelState.AddModelError(string.Empty, "Usuario o contraseña incorrectas.");
+            return View(model);
+        }
+
+        await SignInAdminAsync(adminUser);
+        return RedirectToLocal(model.ReturnUrl);
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdminLogout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return RedirectToAction(nameof(AdminLogin));
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangeAdminUsername(string userName, string tab = "bookings")
+    {
+        var adminUser = await FindCurrentAdminUserAsync();
+        if (adminUser is null)
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction(nameof(AdminLogin));
+        }
+
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            TempData["AdminAccountError"] = "El usuario admin no puede estar vacio.";
+            return RedirectToAction(nameof(Admin), new { tab });
+        }
+
+        var cleanUserName = userName.Trim();
+        var normalizedUserName = cleanUserName.ToLowerInvariant();
+        var userNameInUse = await dbContext.AdminUsers
+            .AsNoTracking()
+            .AnyAsync(existingUser => existingUser.Id != adminUser.Id && existingUser.UserName.ToLower() == normalizedUserName);
+
+        if (userNameInUse)
+        {
+            TempData["AdminAccountError"] = "Ese usuario admin ya existe.";
+            return RedirectToAction(nameof(Admin), new { tab });
+        }
+
+        adminUser.UserName = cleanUserName;
+        await dbContext.SaveChangesAsync();
+        await SignInAdminAsync(adminUser);
+
+        TempData["AdminAccountUpdated"] = "Usuario admin actualizado.";
+        return RedirectToAction(nameof(Admin), new { tab });
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangeAdminPassword(string currentPassword, string newPassword, string confirmPassword, string tab = "bookings")
+    {
+        var adminUser = await FindCurrentAdminUserAsync();
+        if (adminUser is null)
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction(nameof(AdminLogin));
+        }
+
+        if (string.IsNullOrWhiteSpace(currentPassword)
+            || string.IsNullOrWhiteSpace(newPassword)
+            || string.IsNullOrWhiteSpace(confirmPassword))
+        {
+            TempData["AdminAccountError"] = "Completa todos los campos de contraseña.";
+            return RedirectToAction(nameof(Admin), new { tab });
+        }
+
+        if (!passwordHasher.VerifyPassword(currentPassword, adminUser.Salt, adminUser.PasswordHash))
+        {
+            TempData["AdminAccountError"] = "La contraseña actual no coincide.";
+            return RedirectToAction(nameof(Admin), new { tab });
+        }
+
+        if (newPassword.Length < 12)
+        {
+            TempData["AdminAccountError"] = "La nueva contraseña debe tener al menos 12 caracteres.";
+            return RedirectToAction(nameof(Admin), new { tab });
+        }
+
+        if (!string.Equals(newPassword, confirmPassword, StringComparison.Ordinal))
+        {
+            TempData["AdminAccountError"] = "La confirmacion de contraseña no coincide.";
+            return RedirectToAction(nameof(Admin), new { tab });
+        }
+
+        var updatedPassword = passwordHasher.HashPassword(newPassword);
+        adminUser.Salt = updatedPassword.Salt;
+        adminUser.PasswordHash = updatedPassword.PasswordHash;
+        await dbContext.SaveChangesAsync();
+
+        TempData["AdminAccountUpdated"] = "Contraseña admin actualizada.";
+        return RedirectToAction(nameof(Admin), new { tab });
+    }
+
+    [Authorize]
     public async Task<IActionResult> Admin(string tab = "bookings")
     {
         await RejectExpiredPendingBookingsAsync();
@@ -77,11 +217,13 @@ public class AccountsController(AppDbContext dbContext) : Controller
         {
             Bookings = bookings,
             Customers = customers,
-            ActiveTab = string.Equals(tab, "clients", StringComparison.OrdinalIgnoreCase) ? "clients" : "bookings"
+            ActiveTab = string.Equals(tab, "clients", StringComparison.OrdinalIgnoreCase) ? "clients" : "bookings",
+            AdminUserName = HttpContext.User.Identity?.Name ?? "admin"
         });
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> ExportCustomers()
     {
         var customers = await dbContext.Customers
@@ -148,6 +290,7 @@ public class AccountsController(AppDbContext dbContext) : Controller
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> ExportBookings()
     {
         var bookings = await dbContext.Bookings
@@ -204,6 +347,7 @@ public class AccountsController(AppDbContext dbContext) : Controller
     }
 
     [HttpPost]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteCustomer(long id, string tab = "clients")
     {
@@ -224,6 +368,7 @@ public class AccountsController(AppDbContext dbContext) : Controller
     }
 
     [HttpPost]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteBooking(long id, string tab = "bookings")
     {
@@ -511,6 +656,43 @@ public class AccountsController(AppDbContext dbContext) : Controller
         public string? Email { get; set; }
         public string? City { get; set; }
         public string? Country { get; set; }
+    }
+
+    private async Task SignInAdminAsync(AdminUser adminUser)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, adminUser.Id.ToString()),
+            new(ClaimTypes.Name, adminUser.UserName)
+        };
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal,
+            new AuthenticationProperties
+            {
+                AllowRefresh = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(12),
+                IsPersistent = true
+            });
+    }
+
+    private async Task<AdminUser?> FindCurrentAdminUserAsync()
+    {
+        var adminIdValue = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return long.TryParse(adminIdValue, out var adminId)
+            ? await dbContext.AdminUsers.FirstOrDefaultAsync(adminUser => adminUser.Id == adminId)
+            : null;
+    }
+
+    private IActionResult RedirectToLocal(string? returnUrl)
+    {
+        return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+            ? LocalRedirect(returnUrl)
+            : RedirectToAction(nameof(Admin));
     }
 
     private static string NormalizeStatus(string? status)

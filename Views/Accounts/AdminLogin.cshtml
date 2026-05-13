@@ -1,0 +1,51 @@
+@model AdminLoginViewModel
+
+@{
+    ViewData["Title"] = "Admin Login";
+}
+
+<section class="w-full" style="min-height: 100vh; padding-top: 140px;">
+    <div class="mx-auto w-full max-w-md rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="mb-6">
+            <p class="text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Acceso privado
+            </p>
+            <h1 class="mt-2 text-center text-2xl font-bold tracking-normal text-slate-950">
+                Scooter de la Bahía Corp.
+            </h1>
+        </div>
+
+        <form asp-action="AdminLogin" method="post" class="space-y-4">
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div asp-validation-summary="ModelOnly"
+                     class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                </div>
+            }
+
+            <div>
+                <label asp-for="UserName" class="mb-1 block text-sm font-semibold text-slate-700">Usuario</label>
+                <input asp-for="UserName"
+                       autocomplete="username"
+                       class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="UserName" class="mt-1 block text-xs font-medium text-red-600"></span>
+            </div>
+
+            <div>
+                <label asp-for="Password" class="mb-1 block text-sm font-semibold text-slate-700">Contraseña</label>
+                <input asp-for="Password"
+                       type="password"
+                       autocomplete="current-password"
+                       class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                <span asp-validation-for="Password" class="mt-1 block text-xs font-medium text-red-600"></span>
+            </div>
+
+            <button type="submit"
+                    class="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+                Entrar
+            </button>
+        </form>
+    </div>
+</section>

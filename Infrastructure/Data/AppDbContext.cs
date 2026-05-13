@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<Rental> Rentals => Set<Rental>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -118,6 +119,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(rental => rental.Reviews)
                 .HasForeignKey(review => review.RentalId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<AdminUser>(entity =>
+        {
+            entity.ToTable("admin_user");
+            entity.HasKey(adminUser => adminUser.Id);
+
+            entity.Property(adminUser => adminUser.Id).HasColumnName("id");
+            entity.Property(adminUser => adminUser.UserName).HasColumnName("user_name");
+            entity.Property(adminUser => adminUser.Salt).HasColumnName("salt").HasColumnType("bytea");
+            entity.Property(adminUser => adminUser.PasswordHash).HasColumnName("password_hash").HasColumnType("bytea");
+
+            entity.HasIndex(adminUser => adminUser.UserName).IsUnique();
         });
     }
 }

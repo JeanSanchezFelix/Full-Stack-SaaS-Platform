@@ -14,6 +14,7 @@
 @{
     string currentController = ViewContext.RouteData.Values["Controller"]?.ToString() ?? string.Empty;
     string currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
+    bool isAdminArea = currentController == "Accounts" && (currentAction == "Admin" || currentAction == "AdminLogin");
 
     Func<string, string, string> isActive = (controller, action) =>
         currentController == controller && currentAction == action
@@ -54,7 +55,7 @@
                     </a>
 
                     <a asp-controller="Accounts" asp-action="Admin"
-                           class="font-bold transition hover:text-[#EB6A38] @isActive("Accounts", "Admin")">
+                           class="font-bold transition hover:text-[#EB6A38] @(isAdminArea ? "text-[#EB6A38] font-bold" : "text-slate-900")">
                         Admin
                     </a>
 

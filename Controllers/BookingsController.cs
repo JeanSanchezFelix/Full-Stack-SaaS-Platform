@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SvelteHybridMVC.Infrastructure.Data;
@@ -232,6 +233,7 @@ public class BookingsController : Controller
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> Pending()
     {
         var bookings = await _dbContext.Bookings
@@ -257,6 +259,7 @@ public class BookingsController : Controller
     }
 
     [HttpPost]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Approve(long id)
     {
@@ -294,6 +297,7 @@ public class BookingsController : Controller
     }
 
     [HttpPost]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(long id, string? adminNotes)
     {
@@ -321,6 +325,7 @@ public class BookingsController : Controller
     }
 
     [HttpPost]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reapprove(long id, string? adminNotes)
     {

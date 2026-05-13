@@ -1,6 +1,8 @@
 using SvelteHybridMVC.Core;
 using SvelteHybridMVC.Infrastructure.Data;
 using SvelteHybridMVC.Infrastructure.Extensions;
+using SvelteHybridMVC.Infrastructure.Security;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 LoadDotEnv();
@@ -19,6 +21,23 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString);
 });
 
+builder.Services.AddScoped<AdminPasswordHasher>();
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "sb_admin_auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.LoginPath = "/Accounts/AdminLogin";
+        options.AccessDeniedPath = "/Accounts/AdminLogin";
+        options.ExpireTimeSpan = TimeSpan.FromHours(12);
+        options.SlidingExpiration = true;
+    });
+builder.Services.AddAuthorization();
+
 // 2. Register core Svelte services.
 builder.Services.AddSvelteHybrid(options =>
 {
@@ -36,6 +55,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Svelte SSR endpoint
