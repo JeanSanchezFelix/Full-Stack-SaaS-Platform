@@ -172,6 +172,18 @@ public class AccountsController(AppDbContext dbContext, AdminPasswordHasher pass
                 ScooterQuantity = booking.ScooterQuantity,
                 EbikeQuantity = booking.EbikeQuantity,
                 EstimatedTotal = booking.EstimatedTotal,
+                ReviewRating = booking.Reviews
+                    .OrderByDescending(review => review.CreatedAt)
+                    .Select(review => (int?)review.Rating)
+                    .FirstOrDefault(),
+                ReviewComment = booking.Reviews
+                    .OrderByDescending(review => review.CreatedAt)
+                    .Select(review => review.Comment)
+                    .FirstOrDefault(),
+                ReviewCreatedAt = booking.Reviews
+                    .OrderByDescending(review => review.CreatedAt)
+                    .Select(review => (DateTime?)review.CreatedAt)
+                    .FirstOrDefault(),
                 Status = NormalizeStatus(booking.Status),
                 AdminNotes = NormalizeAdminNotes(booking.AdminNotes)
             })
@@ -207,7 +219,19 @@ public class AccountsController(AppDbContext dbContext, AdminPasswordHasher pass
                         ScooterQuantity = booking.ScooterQuantity,
                         EbikeQuantity = booking.EbikeQuantity,
                         EstimatedTotal = booking.EstimatedTotal,
-                        AdminNotes = NormalizeAdminNotes(booking.AdminNotes)
+                        AdminNotes = NormalizeAdminNotes(booking.AdminNotes),
+                        ReviewRating = booking.Reviews
+                            .OrderByDescending(review => review.CreatedAt)
+                            .Select(review => (int?)review.Rating)
+                            .FirstOrDefault(),
+                        ReviewComment = booking.Reviews
+                            .OrderByDescending(review => review.CreatedAt)
+                            .Select(review => review.Comment)
+                            .FirstOrDefault(),
+                        ReviewCreatedAt = booking.Reviews
+                            .OrderByDescending(review => review.CreatedAt)
+                            .Select(review => (DateTime?)review.CreatedAt)
+                            .FirstOrDefault()
                     })
                     .ToList()
             })
@@ -296,6 +320,7 @@ public class AccountsController(AppDbContext dbContext, AdminPasswordHasher pass
         var bookings = await dbContext.Bookings
             .AsNoTracking()
             .Include(booking => booking.Customer)
+            .Include(booking => booking.Reviews)
             .OrderByDescending(booking => booking.CreatedAt)
             .ToListAsync();
 
@@ -308,9 +333,11 @@ public class AccountsController(AppDbContext dbContext, AdminPasswordHasher pass
         ws.Cell(1, 5).Value = "Scooters";
         ws.Cell(1, 6).Value = "E-bikes";
         ws.Cell(1, 7).Value = "Total estimado";
+        ws.Cell(1, 8).Value = "Puntaje (1-5)";
+        ws.Cell(1, 9).Value = "Observaciones del cliente";
         // ws.Cell(1, 10).Value = "Estado";
         // ws.Cell(1, 11).Value = "Nota admin";
-        ws.Cell(1, 8).Value = "Reserva creada en";
+        ws.Cell(1, 10).Value = "Reserva creada en";
 
         ws.Row(1).Style.Font.Bold = true;
         ws.SheetView.FreezeRows(1);
@@ -329,13 +356,18 @@ public class AccountsController(AppDbContext dbContext, AdminPasswordHasher pass
             ws.Cell(row, 5).Value = booking.ScooterQuantity;
             ws.Cell(row, 6).Value = booking.EbikeQuantity;
             ws.Cell(row, 7).Value = booking.EstimatedTotal;
+            var latestReview = booking.Reviews
+                .OrderByDescending(review => review.CreatedAt)
+                .FirstOrDefault();
+            ws.Cell(row, 8).Value = latestReview?.Rating;
+            ws.Cell(row, 9).Value = latestReview?.Comment ?? string.Empty;
             // ws.Cell(row, 10).Value = NormalizeStatus(booking.Status);
             // ws.Cell(row, 11).Value = NormalizeAdminNotes(booking.AdminNotes) ?? string.Empty;
-            ws.Cell(row, 8).Value = booking.CreatedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-";
+            ws.Cell(row, 10).Value = booking.CreatedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-";
             row++;
         }
 
-        ws.Columns(1, 8).AdjustToContents();
+        ws.Columns(1, 10).AdjustToContents();
 
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
@@ -449,7 +481,19 @@ public class AccountsController(AppDbContext dbContext, AdminPasswordHasher pass
                             estimatedTotal = booking.EstimatedTotal,
                             adminNotes = NormalizeAdminNotes(booking.AdminNotes),
                             reconfirmRequested = booking.AdminNotes != null && booking.AdminNotes.StartsWith(ReconfirmPrefix),
-                            canDelete = booking.Status == "pending" || booking.Status == "rejected"
+                            canDelete = booking.Status == "pending" || booking.Status == "rejected",
+                            reviewRating = booking.Reviews
+                                .OrderByDescending(review => review.CreatedAt)
+                                .Select(review => (int?)review.Rating)
+                                .FirstOrDefault(),
+                            reviewComment = booking.Reviews
+                                .OrderByDescending(review => review.CreatedAt)
+                                .Select(review => review.Comment)
+                                .FirstOrDefault(),
+                            reviewCreatedAt = booking.Reviews
+                                .OrderByDescending(review => review.CreatedAt)
+                                .Select(review => (DateTime?)review.CreatedAt)
+                                .FirstOrDefault()
                         })
                         .ToList()
                 })

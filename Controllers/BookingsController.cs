@@ -346,7 +346,7 @@ public class BookingsController : Controller
         booking.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();
-        TempData["BookingApproved"] = "Reserva marcada para re-confirmacion del cliente.";
+        TempData["BookingApproved"] = "Reserva marcada para re-confirmación del cliente.";
         return RedirectToAction("Admin", "Accounts", new { tab = "bookings" });
     }
 
@@ -383,7 +383,7 @@ public class BookingsController : Controller
 
         if (string.IsNullOrWhiteSpace(booking.AdminNotes) || !booking.AdminNotes.StartsWith(ReconfirmPrefix))
         {
-            TempData["BookingRejectedError"] = "Esta reserva no tiene una re-confirmacion pendiente.";
+            TempData["BookingRejectedError"] = "Esta reserva no tiene una re-confirmación pendiente.";
             return RedirectToAction("User", "Accounts");
         }
 
@@ -397,12 +397,67 @@ public class BookingsController : Controller
         {
             booking.Status = "cancelled";
             booking.AdminNotes = $"{booking.AdminNotes} | Cliente rechazo re-confirmacion.";
-            TempData["BookingCreated"] = "Rechazaste la re-confirmacion y se libero el horario.";
+            TempData["BookingCreated"] = "Rechazaste la re-confirmación y se libero el horario.";
         }
 
         booking.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync();
         return RedirectToAction("User", "Accounts");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SubmitReview(long id, int rating, string? comment, string? customerCode = null)
+    {
+        var booking = await FindOwnedBookingAsync(id, customerCode);
+        if (booking is null)
+        {
+            return NotFound(new { message = "No encontramos la reserva." });
+        }
+
+        if (rating < 1 || rating > 10)
+        {
+            return BadRequest(new { message = "La calificación debe estar entre 1 y 10." });
+        }
+
+        var normalizedComment = string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedComment))
+        {
+            return BadRequest(new { message = "El comentario es requerido." });
+        }
+
+        if (normalizedComment.Length > 1000)
+        {
+            return BadRequest(new { message = "El comentario no puede exceder 1000 caracteres." });
+        }
+
+        var nowUtc = DateTime.UtcNow;
+        var existingReview = await _dbContext.Reviews
+            .FirstOrDefaultAsync(review => review.CustomerId == booking.CustomerId && review.BookingId == booking.Id);
+
+        if (existingReview is not null)
+        {
+            return BadRequest(new { message = "Ya enviaste una reseña para esta reserva." });
+        }
+
+        _dbContext.Reviews.Add(new Review
+        {
+            CustomerId = booking.CustomerId,
+            BookingId = booking.Id,
+            RentalId = booking.Rental?.Id,
+            Rating = rating,
+            Comment = normalizedComment,
+            CreatedAt = nowUtc
+        });
+
+        await _dbContext.SaveChangesAsync();
+        return Json(new
+        {
+            message = "Gracias por compartir tu reseña.",
+            reviewRating = rating,
+            reviewComment = normalizedComment,
+            reviewCreatedAt = nowUtc
+        });
     }
 
     private static DateTime ToUtc(DateTime value)
@@ -460,6 +515,7 @@ public class BookingsController : Controller
         var normalized = resolvedCustomerCode.Trim().ToUpperInvariant();
         return await _dbContext.Bookings
             .Include(booking => booking.Customer)
+            .Include(booking => booking.Rental)
             .FirstOrDefaultAsync(booking => booking.Id == id
                 && booking.Customer != null
                 && booking.Customer.CustomerCode.ToUpper() == normalized);

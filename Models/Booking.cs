@@ -21,4 +21,5 @@ public class Booking
 
     public Customer? Customer { get; set; }
     public Rental? Rental { get; set; }
+    public ICollection<Review> Reviews { get; set; } = [];
 }

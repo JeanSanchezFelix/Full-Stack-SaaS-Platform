@@ -68,24 +68,24 @@ public class CustomersController : Controller
 
         var normalizedLicense = NormalizeOptional(model.LicenseNumber);
         var normalizedEmail = NormalizeOptional(model.Email);
-
+        
         if (!string.IsNullOrWhiteSpace(model.PhoneNumber) && !IsValidPhone(model.PhoneNumber))
         {
-            ModelState.AddModelError(nameof(model.PhoneNumber), "Entra un numero de telefono valido.");
+            ModelState.AddModelError(nameof(model.PhoneNumber), "Entre un número de teléfono válido.");
         }
 
         if (!string.IsNullOrWhiteSpace(model.Email) && !IsValidEmail(model.Email))
         {
-            ModelState.AddModelError(nameof(model.Email), "Entra un correo electronico valido.");
+            ModelState.AddModelError(nameof(model.Email), "Entre un correo electrónico válido.");
         }
 
         if (string.IsNullOrWhiteSpace(model.ElectronicSignature))
         {
-            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electronica es requerida para guardar su informacion.");
+            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electrónica es requerida para guardar su información.");
         }
         else if (!TryDecodeSignaturePng(model.ElectronicSignature, out _))
         {
-            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electronica no es valida.");
+            ModelState.AddModelError(nameof(model.ElectronicSignature), "La firma electrónica no es válida.");
         }
 
         if (!model.LiabilityWaiverSigned)
@@ -95,12 +95,12 @@ public class CustomersController : Controller
 
         if (!string.IsNullOrWhiteSpace(normalizedLicense) && await LicenseExistsAsync(normalizedLicense))
         {
-            ModelState.AddModelError(nameof(model.LicenseNumber), "Ya existe un cliente registrado con este numero de licencia.");
+            ModelState.AddModelError(nameof(model.LicenseNumber), "Ya existe un cliente registrado con este número de licencia.");
         }
 
         if (!string.IsNullOrWhiteSpace(normalizedEmail) && await EmailExistsAsync(normalizedEmail))
         {
-            ModelState.AddModelError(nameof(model.Email), "Ya existe un cliente registrado con este correo electronico.");
+            ModelState.AddModelError(nameof(model.Email), "Ya existe un cliente registrado con este correo electrónico.");
         }
 
         if (!ModelState.IsValid)

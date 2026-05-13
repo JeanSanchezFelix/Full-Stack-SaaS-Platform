@@ -105,6 +105,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.Property(review => review.Id).HasColumnName("id");
             entity.Property(review => review.CustomerId).HasColumnName("customer_id");
+            entity.Property(review => review.BookingId).HasColumnName("booking_id");
             entity.Property(review => review.RentalId).HasColumnName("rental_id");
             entity.Property(review => review.Rating).HasColumnName("rating");
             entity.Property(review => review.Comment).HasColumnName("comment");
@@ -114,6 +115,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(customer => customer.Reviews)
                 .HasForeignKey(review => review.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(review => review.Booking)
+                .WithMany(booking => booking.Reviews)
+                .HasForeignKey(review => review.BookingId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasOne(review => review.Rental)
                 .WithMany(rental => rental.Reviews)

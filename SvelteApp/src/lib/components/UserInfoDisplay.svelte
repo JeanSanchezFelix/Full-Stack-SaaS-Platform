@@ -1,12 +1,18 @@
-<script>
+﻿<script>
   let { customer = null, licenseNumber = "" } = $props();
   let showBookings = $state(false);
   let isEditing = $state(false);
   let isSaving = $state(false);
   let saveError = $state("");
   let profile = $state(customer);
-  const bookingRowsLimit = 8;
+  const bookingRowsLimit = 6;
   let showAllBookings = $state(false);
+  let showReviewModal = $state(false);
+  let activeReviewBookingId = $state(null);
+  let reviewRating = $state(5);
+  let reviewComment = $state("");
+  let reviewError = $state("");
+  let isSubmittingReview = $state(false);
   let form = $state({
     firstName: "",
     lastName: "",
@@ -122,6 +128,77 @@
     event.preventDefault();
     clearPersistedProfileState();
     window.location.href = "/Accounts/LogoffProfile";
+  }
+
+  function openReviewModal(booking) {
+    if (booking?.reviewRating) return;
+    activeReviewBookingId = booking?.id ?? null;
+    reviewRating = booking?.reviewRating ?? 5;
+    reviewComment = booking?.reviewComment ?? "";
+    reviewError = "";
+    showReviewModal = true;
+  }
+
+  function closeReviewModal() {
+    showReviewModal = false;
+    activeReviewBookingId = null;
+    reviewError = "";
+    isSubmittingReview = false;
+  }
+
+  async function submitReview() {
+    if (!profile?.customerCode || !activeReviewBookingId) return;
+    if (!reviewComment.trim()) {
+      reviewError = "El comentario es requerido.";
+      return;
+    }
+
+    isSubmittingReview = true;
+    reviewError = "";
+
+    try {
+      const tokenInput = document.querySelector('#booking-form input[name="__RequestVerificationToken"]');
+      const formData = new FormData();
+      formData.append("id", String(activeReviewBookingId));
+      formData.append("rating", String(reviewRating));
+      formData.append("comment", reviewComment.trim());
+      formData.append("customerCode", profile.customerCode || "");
+      if (tokenInput?.value) {
+        formData.append("__RequestVerificationToken", tokenInput.value);
+      }
+
+      const response = await fetch("/Bookings/SubmitReview", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        reviewError = payload?.message || "No se pudo guardar la reseña.";
+        return;
+      }
+
+      if (Array.isArray(profile?.bookings)) {
+        profile = {
+          ...profile,
+          bookings: profile.bookings.map((booking) =>
+            booking.id === activeReviewBookingId
+              ? {
+                  ...booking,
+                  reviewRating: payload.reviewRating,
+                  reviewComment: payload.reviewComment,
+                  reviewCreatedAt: payload.reviewCreatedAt,
+                }
+              : booking,
+          ),
+        };
+      }
+
+      closeReviewModal();
+    } catch {
+      reviewError = "No se pudo guardar la reseña.";
+    } finally {
+      isSubmittingReview = false;
+    }
   }
 </script>
 
@@ -253,6 +330,7 @@
                 <th class="px-3 py-2 font-semibold">Scooters</th>
                 <th class="min-w-[70px] px-3 py-2 font-semibold">E-bikes</th>
                 <th class="px-3 py-2 font-semibold">Total estimado</th>
+                <th class="px-3 py-2 font-semibold"></th>
                 <!-- <th class="px-3 py-2 font-semibold">Estado</th> -->
                 <!-- <th class="px-3 py-2 font-semibold">Nota admin</th> -->
                 <!-- <th class="px-3 py-2 font-semibold"></th> -->
@@ -269,6 +347,37 @@
                   <td class="px-3 py-2 text-slate-700">{booking.scooterQuantity}</td>
                   <td class="px-3 py-2 text-slate-700">{booking.ebikeQuantity}</td>
                   <td class="px-3 py-2 text-slate-700">${booking.estimatedTotal.toFixed(2)}</td>
+                  <td class="px-3 py-2 text-center">
+                    <button
+                      type="button"
+                      class={!booking.reviewRating
+                        ? "inline-flex items-center justify-center rounded-md border border-slate-300 bg-white p-1.5 text-slate-700 transition hover:bg-blue-50 hover:text-[#267DA1]"
+                        : "inline-flex items-center justify-center rounded-md border border-slate-200 bg-slate-100 p-1.5 text-slate-400 cursor-not-allowed"}
+                      title={!booking.reviewRating
+                        ? "Escribir reseña"
+                        : booking.reviewRating
+                        ? "Reseña enviada"
+                        : "No disponible"}
+                      onclick={() => openReviewModal(booking)}
+                      disabled={!!booking.reviewRating}
+                    >
+                      {#if booking.reviewRating}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
+                      {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
+                        </svg>
+                      {/if}
+                    </button>
+                    <!-- {#if booking.reviewRating}
+                      <p class="mt-1 text-[11px] font-semibold text-amber-600">{booking.reviewRating}/5</p>
+                      {#if booking.reviewComment}
+                        <p class="mt-0.5 max-w-[160px] truncate text-[11px] text-slate-500" title={booking.reviewComment}>{booking.reviewComment}</p>
+                      {/if}
+                    {/if} -->
+                  </td>
                   <!-- <td class="px-3 py-2 font-medium text-slate-800">{booking.status}</td> -->
                   <!-- <td class="px-3 py-2 text-slate-600">{booking.adminNotes || "-"}</td> -->
                   <!-- <td class="px-3 py-2 text-right">
@@ -317,6 +426,80 @@
       {:else}
         <p class="text-sm text-slate-600 text-center">No tienes reservas registradas.</p>
       {/if}
+    </div>
+  </div>
+{/if}
+
+{#if showReviewModal}
+  <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-lg rounded-md border border-t-4 border-[#267DA1] bg-white p-5 shadow-sm">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-slate-900">Comparte su experiencia</h3>
+        <button type="button" class="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100" onclick={closeReviewModal}>Cerrar</button>
+      </div>
+      <p class="text-sm text-slate-600">En una escala del 1 al 10. ¿Cuánto le gustó la aventura o el servicio?</p>
+
+      <div class="mt-4">
+        <label
+          for="reviewRating"
+          class="block text-sm font-semibold text-slate-800"
+        >
+          Calificación (1-10)
+        </label>
+
+        <select
+          id="reviewRating"
+          class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+          bind:value={reviewRating}
+        >
+          <option value={1}>1 - Muy mala</option>
+          <option value={2}>2 - Mala</option>
+          <option value={3}>3 - Regular</option>
+          <option value={4}>4 - Aceptable</option>
+          <option value={5}>5 - Buena</option>
+          <option value={6}>6 - Muy buena</option>
+          <option value={7}>7 - Destacable</option>
+          <option value={8}>8 - Excelente</option>
+          <option value={9}>9 - Casi perfecta</option>
+          <option value={10}>10 - Perfecta</option>
+        </select>
+      </div>
+
+      <div class="mt-4">
+        <label
+          for="reviewComment"
+          class="block text-sm font-semibold text-slate-800"
+        >
+          Comentario
+        </label>
+
+        <textarea
+          id="reviewComment"
+          class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+          rows="4"
+          maxlength="1000"
+          bind:value={reviewComment}
+          placeholder="Cuéntanos cómo fue tu experiencia..."
+        ></textarea>
+      </div>
+
+      {#if reviewError}
+        <p class="mt-2 text-sm text-red-600">{reviewError}</p>
+      {/if}
+
+      <div class="mt-4 flex items-center justify-end gap-2">
+        <button type="button" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100" onclick={closeReviewModal}>
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+          onclick={submitReview}
+          disabled={isSubmittingReview}
+        >
+          {isSubmittingReview ? "Guardando..." : "Guardar reseña"}
+        </button>
+      </div>
     </div>
   </div>
 {/if}

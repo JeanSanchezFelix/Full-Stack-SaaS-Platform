@@ -270,6 +270,8 @@
                         <th class="px-4 py-3 font-semibold" data-col-type="number">Scooters</th>
                         <th class="min-w-[100px] px-4 py-3 font-semibold" data-col-type="number">E-bikes</th>
                         <th class="px-4 py-3 font-semibold" data-col-type="currency">Total estimado</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="number">Puntaje</th>
+                        <th class="px-4 py-3 font-semibold" data-col-type="text">Comentario</th>
                         @* <th class="px-4 py-3 font-semibold">Estado</th> *@
                         @* <th class="px-4 py-3 font-semibold">Nota admin</th> *@
                         @* <th class="px-4 py-3 font-semibold"></th> *@
@@ -305,6 +307,8 @@
                             <td class="px-4 py-3 text-slate-600">@booking.ScooterQuantity</td>
                             <td class="px-4 py-3 text-slate-600">@booking.EbikeQuantity</td>
                             <td class="px-4 py-3 text-slate-600">@(booking.EstimatedTotal.HasValue ? booking.EstimatedTotal.Value.ToString("C") : "-")</td>
+                            <td class="px-4 py-3 text-slate-600">@(booking.ReviewRating.HasValue ? $"{booking.ReviewRating}/10" : "-")</td>
+                            <td class="px-4 py-3 text-slate-600">@(string.IsNullOrWhiteSpace(booking.ReviewComment) ? "-" : booking.ReviewComment)</td>
                             @* <td class="px-4 py-3 text-slate-600">@booking.Status</td> *@
                             @* <td class="px-4 py-3 text-slate-600">@booking.AdminNotes</td> *@
                             @* <td class="px-4 py-3 text-right">
@@ -387,6 +391,8 @@
                             <th class="px-3 py-2 font-semibold">Scooters</th>
                             <th class="px-3 py-2 font-semibold">E-bikes</th>
                             <th class="px-3 py-2 font-semibold">Total estimado</th>
+                            <th class="px-3 py-2 font-semibold">Puntaje</th>
+                            <th class="px-3 py-2 font-semibold">Comentario</th>
                             <th class="px-3 py-2 font-semibold"></th>
                         </tr>
                     </thead>
@@ -520,6 +526,15 @@
                 return parsed ? parsed.toLocaleTimeString('es-PR', { hour: '2-digit', minute: '2-digit' }) : '-';
             }
 
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
             window.closeCustomerHistoryModal = () => {
                 if (!customerHistoryModal) {
                     return;
@@ -605,6 +620,8 @@
                             const scooterQuantity = getBookingValue(booking, 'scooterQuantity', 'ScooterQuantity');
                             const ebikeQuantity = getBookingValue(booking, 'ebikeQuantity', 'EbikeQuantity');
                             const estimatedTotal = getBookingValue(booking, 'estimatedTotal', 'EstimatedTotal');
+                            const reviewRating = getBookingValue(booking, 'reviewRating', 'ReviewRating');
+                            const reviewComment = getBookingValue(booking, 'reviewComment', 'ReviewComment');
                             const bookingId = getBookingValue(booking, 'id', 'Id');
                             const startDate = toValidDate(requestedStart);
                             const endDate = toValidDate(requestedEnd);
@@ -627,6 +644,8 @@
                                 <td class="px-3 py-2 text-slate-700">${scooterQuantity ?? '-'}</td>
                                 <td class="px-3 py-2 text-slate-700">${ebikeQuantity ?? '-'}</td>
                                 <td class="px-3 py-2 text-slate-700">${totalText}</td>
+                                <td class="px-3 py-2 text-slate-700">${reviewRating ? `${reviewRating}/10` : '-'}</td>
+                                <td class="px-3 py-2 text-slate-700 max-w-[240px] truncate" title="${escapeHtml(reviewComment ?? '')}">${escapeHtml(reviewComment ?? '-')}</td>
                                 <td class="px-3 py-2">
                                     ${bookingId
                                         ? `

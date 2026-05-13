@@ -10,6 +10,9 @@ public class BookingListItemViewModel
     public int ScooterQuantity { get; set; }
     public int EbikeQuantity { get; set; }
     public decimal? EstimatedTotal { get; set; }
+    public int? ReviewRating { get; set; }
+    public string? ReviewComment { get; set; }
+    public DateTime? ReviewCreatedAt { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? AdminNotes { get; set; }
 }
