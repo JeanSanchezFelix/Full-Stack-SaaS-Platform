@@ -413,7 +413,7 @@
           </table>
         </div>
         {#if profile.bookings.length > bookingRowsLimit}
-          <div class="mt-3 flex justify-end">
+          <div class="mt-3 flex justify-start">
             <button
               type="button"
               class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
