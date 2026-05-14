@@ -155,7 +155,7 @@
   <div class="rounded-md border border-slate-200 bg-white px-4 py-4 md:min-w-64">
     <p class="text-sm font-semibold text-slate-900">Estado del Relevo de Responsabilidad</p>
     <p class="mt-1 text-sm text-slate-600">
-      {waiverSigned ? 'Se requiere firma antes de guardar.' : 'La firma se desbloquea despues de que se marque el relevo de responsabilidad.'}
+      {waiverSigned ? 'Se requiere firma antes de guardar.' : 'La firma se desbloquea después de que se marque el relevo de responsabilidad.'}
     </p>
   </div>
 </aside>

@@ -156,7 +156,7 @@ public class BookingsController : Controller
 
         if (model.RequestedEnd.HasValue && model.RequestedEnd.Value <= model.RequestedStart)
         {
-            ModelState.AddModelError(nameof(model.RequestedEnd), "La hora de fin debe ser despues de la hora de inicio.");
+            ModelState.AddModelError(nameof(model.RequestedEnd), "La hora de fin debe ser después de la hora de inicio.");
         }
 
         if (!DurationPricing.ContainsKey(durationHours))

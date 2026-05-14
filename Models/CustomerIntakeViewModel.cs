@@ -41,8 +41,8 @@ public class CustomerIntakeViewModel
     [Display(Name = "He leido y acepto el relevo de responsabilidad.")]
     public bool LiabilityWaiverSigned { get; set; }
 
-    [Required(ErrorMessage = "La firma electronica es requerida.")]
-    [Display(Name = "Firma electronica ")]
+    [Required(ErrorMessage = "La firma electrónica es requerida.")]
+    [Display(Name = "Firma electrónica ")]
     public string? ElectronicSignature { get; set; }
 
     [Display(Name = "Autorizo recibir comunicaciones promocionales relacionadas con Scooter de la Bahia via correo electronico o WhatsApp.")]

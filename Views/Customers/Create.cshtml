@@ -58,29 +58,44 @@
 <section class="mx-auto max-w-4xl">
     <div class="mb-8">
         <h1 class="text-3xl font-bold tracking-normal text-slate-950">Añade tu información</h1>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Llena el formulario para registrarte y poder alquilar nuestros scooters. Asegúrate de proporcionar información precisa para una mejor experiencia.</p>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Llena el formulario para registrarte y poder alquilar
+            nuestros scooters. Asegúrate de proporcionar información precisa para una mejor experiencia.</p>
     </div>
     @if (TempData["CustomerCreated"] is string message)
     {
         <div class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-        @message
+            @message
         </div>
     }
-    <div data-svelte-component="CustomerIntakeEnhancer" data-props='{"formId":"customer-intake-form"}'></div>
 
     <form id="customer-intake-form" asp-action="Create" method="post" class="space-y-8" novalidate>
         <input asp-for="ReturnUrl" type="hidden" />
-        <div asp-validation-summary="ModelOnly" class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+        <div asp-validation-summary="ModelOnly"
+                class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
         <div class="grid gap-5 md:grid-cols-2">
-            <div data-svelte-component="TextEntryField" data-props='@FieldProps("FirstName", "Nombre", Model.FirstName, required: true)'></div>
-            <div data-svelte-component="TextEntryField" data-props='@FieldProps("LastName", "Apellido", Model.LastName, required: true)'></div>
-            <div data-svelte-component="TextEntryField" data-props='@FieldProps("LicenseNumber", "Número de licencia", Model.LicenseNumber, required: true)'></div>
-            <div data-svelte-component="TextEntryField" data-props='@FieldProps("PhoneNumber", "Número de teléfono", Model.PhoneNumber, required: true)'></div>
-            <div data-svelte-component="TextEntryField" data-props='@FieldProps("Email", "Correo electrónico", Model.Email, type: "email", required: false)'></div>
-            <div data-svelte-component="TextEntryField" data-props='@FieldProps("City", "Pueblo de procedencia", Model.City, required: true)'></div>
-            <div data-svelte-component="TextEntryField" data-props='@FieldProps("Country", "País", Model.Country, required: true)'></div>
-            <div data-svelte-component="TextEntryField" data-props='@FieldProps("HowDidYouHear", "¿Cómo supiste de nosotros?", Model.HowDidYouHear, multiline: true, rows: 1, wrapperClass: "md:col-span-2")'></div>
+            <div data-svelte-component="TextEntryField"
+                    data-props='@FieldProps("FirstName", "Nombre", Model.FirstName, required: true)'></div>
+            <div data-svelte-component="TextEntryField"
+                    data-props='@FieldProps("LastName", "Apellido", Model.LastName, required: true)'></div>
+            <div data-svelte-component="TextEntryField"
+                    data-props='@FieldProps("LicenseNumber", "Número de licencia", Model.LicenseNumber, required: true)'>
+            </div>
+            <div data-svelte-component="TextEntryField"
+                    data-props='@FieldProps("PhoneNumber", "Número de teléfono", Model.PhoneNumber, required: true)'></div>
+            <div data-svelte-component="TextEntryField"
+                    data-props='@FieldProps("Email", "Correo electrónico", Model.Email, type: "email", required: false)'>
+            </div>
+            <div data-svelte-component="TextEntryField"
+                    data-props='@FieldProps("City", "Pueblo de procedencia", Model.City, required: true)'></div>
+            <div data-svelte-component="TextEntryField"
+                    data-props='@FieldProps("Country", "País", Model.Country, required: true)'></div>
+            <div data-svelte-component="TextEntryField"
+                    data-props='@FieldProps("HowDidYouHear", label: "¿Dónde o cómo te enteraste de nosotros?", Model.HowDidYouHear, multiline: true, rows: 1, wrapperClass: "md:col-span-2")'>
+            </div>
         </div>
+
+        <div data-svelte-component="CustomerIntakeEnhancer" data-props='{"formId":"customer-intake-form"}'></div>
+        
         <div data-signature-field>
             <div data-signature-dimmable>
                 <label asp-for="ElectronicSignature" class="block text-sm font-medium text-slate-800">
@@ -92,33 +107,41 @@
                 </div>
                 <div class="mt-2 flex items-center justify-between">
                     <p class="text-xs text-slate-500">Dibuja tu firma en el recuadro para guardar el registro.</p>
-                    <button type="button" id="clear-signature-btn" class="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                    <button type="button" id="clear-signature-btn"
+                            class="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">
                         Limpiar firma
                     </button>
                 </div>
                 <span asp-validation-for="ElectronicSignature" class="mt-1 block text-sm text-red-600"></span>
             </div>
-            <p class="text-xs text-slate-500 text-left mt-2">Los campos con <span class="text-red-600">*</span> son requeridos.</p>
+            <p class="text-xs text-slate-500 text-left mt-2">Los campos con <span class="text-red-600">*</span> son
+                requeridos.</p>
         </div>
+    
         <div class="space-y-4 border-t border-slate-200 pt-6">
             <label class="flex items-start gap-3 text-sm text-slate-700">
-                <input asp-for="LiabilityWaiverSigned" class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
+                <input asp-for="LiabilityWaiverSigned"
+                        class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
                 <span>
                     He leído y acepto el
-                    <a asp-controller="Customers" asp-action="LiabilityWaiver" asp-route-returnUrl="@waiverReturnUrl" class="font-medium text-slate-950 underline hover:text-slate-700">
+                    <a asp-controller="Customers" asp-action="LiabilityWaiver" asp-route-returnUrl="@waiverReturnUrl"
+                            class="font-medium text-slate-950 underline hover:text-slate-700">
                         relevo de responsabilidad
                     </a>
                 </span>
             </label>
-            <span data-waiver-client-error class="hidden mt-1 text-sm text-red-600">Debes aceptar el relevo de responsabilidad para continuar.</span>
+            <span data-waiver-client-error class="hidden mt-1 text-sm text-red-600">Debes aceptar el relevo de
+                responsabilidad para continuar.</span>
             <label class="flex items-start gap-3 text-sm text-slate-700">
-                <input asp-for="AuthorizeRecontact" class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
-                <span>Autorizo recibir ofertas o mensajes promocionales de Scooter de la Bahía por correo electrónico o WhatsApp</span>
+                <input asp-for="AuthorizeRecontact"
+                        class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-950 focus:ring-slate-900" />
+                <span>Autorizo recibir ofertas o mensajes promocionales de Scooter de la Bahía por correo electrónico o
+                    WhatsApp</span>
             </label>
         </div>
         <div class="flex items-center gap-3 border-t border-slate-200 pt-6">
-            <div data-svelte-component="ActionButton" data-props='@ButtonProps("Finalizar registro", type: "submit", variant: "primary")'></div>
-            <div data-svelte-component="ActionButton" data-props='@ButtonProps("Cancelar", href: Url.Action("Index", "Home"), variant: "secondary")'></div>
+        <div data-svelte-component="ActionButton" data-props='@ButtonProps("Finalizar registro", type: "submit", variant: "primary")'></div>
+        <div data-svelte-component="ActionButton" data-props='@ButtonProps("Cancelar", href: Url.Action("Index", "Home"), variant: "secondary")'></div>
         </div>
     </form>
 </section>
@@ -271,6 +294,92 @@
             signatureCtx.clearRect(0, 0, width, height);
         }
     };
+    const toCapitalizedWords = (value) => {
+        return String(value ?? '')
+            .toLowerCase()
+            .replace(/\s+/g, ' ')   // normalize multiple spaces
+            .replace(/(^|\s)\S/g, (char) => char.toUpperCase());
+    };
+
+    const capitalizeFields = new Set([
+        'FirstName',
+        'LastName',
+        'City',
+        'Country'
+    ]);
+
+    document.addEventListener('input', (event) => {
+        const field = event.target;
+
+        if (!field || !capitalizeFields.has(field.name)) return;
+
+        // avoid interfering with composition (mobile / IME input)
+        if (field.isComposing) return;
+
+        const value = field.value;
+        const normalized = toCapitalizedWords(value);
+
+        if (value === normalized) return;
+
+        const start = field.selectionStart;
+        const end = field.selectionEnd;
+
+        field.value = normalized;
+
+        // restore cursor safely
+        requestAnimationFrame(() => {
+            if (document.activeElement === field) {
+                field.setSelectionRange(start, end);
+            }
+        });
+    });
+    document.addEventListener('blur', (event) => {
+        const field = event.target;
+
+        if (!field || !capitalizeFields.has(field.name)) return;
+
+        field.value = toCapitalizedWords(field.value);
+    });
+    const capitalizeFirstLetterOnly = (value) => {
+        const str = String(value ?? '').toLowerCase();
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    };
+
+    const fields = new Set([
+        'HowDidYouHear'
+    ]);
+
+    document.addEventListener('input', (event) => {
+        const field = event.target;
+
+        if (!field || !fields.has(field.name)) return;
+
+        if (field.isComposing) return;
+
+        const value = field.value;
+        const normalized = capitalizeFirstLetterOnly(value);
+
+        if (value === normalized) return;
+
+        const start = field.selectionStart;
+        const end = field.selectionEnd;
+
+        field.value = normalized;
+
+        requestAnimationFrame(() => {
+            if (document.activeElement === field) {
+                field.setSelectionRange(start, end);
+            }
+        });
+    });
+    document.addEventListener('blur', (event) => {
+        const field = event.target;
+
+        if (!field || field.name !== 'HowDidYouHear') return;
+
+        const value = String(field.value ?? '').toLowerCase();
+        field.value = value.charAt(0).toUpperCase() + value.slice(1);
+    }, true);
 
     const saveSignatureToInput = () => {
         if (!signatureInput || !signatureCanvas) return;
