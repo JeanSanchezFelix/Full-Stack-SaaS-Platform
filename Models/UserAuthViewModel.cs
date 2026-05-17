@@ -5,7 +5,7 @@ namespace SvelteHybridMVC.Models;
 public class UserAuthViewModel
 {
     [Display(Name = "Es tu primera visita?")]
-    public bool IsFirstTime { get; set; }
+    public bool IsFirstTime { get; set; } = true;
 
     [Required]
     [Display(Name = "Numero de licencia")]
