@@ -29,12 +29,12 @@
             <legend class="px-2 text-sm font-semibold text-slate-900">¿Es tu primera visita?</legend>
             <div class="mt-2 flex flex-wrap gap-4 text-sm text-slate-700">
                 <label class="flex items-center gap-2">
-                    <input asp-for="IsFirstTime" type="radio" value="false" checked class="h-4 w-4 border-slate-300 text-slate-950 focus:ring-slate-900" />
-                    No, ya tengo perfil
+                    <input asp-for="IsFirstTime" type="radio" value="true" checked class="h-4 w-4 border-slate-300 text-slate-950 focus:ring-slate-900" />
+                    Sí, es mi primera vez
                 </label>
                 <label class="flex items-center gap-2">
-                    <input asp-for="IsFirstTime" type="radio" value="true" class="h-4 w-4 border-slate-300 text-slate-950 focus:ring-slate-900" />
-                    Sí, es mi primera vez
+                    <input asp-for="IsFirstTime" type="radio" value="false"  class="h-4 w-4 border-slate-300 text-slate-950 focus:ring-slate-900" />
+                    No, ya tengo perfil
                 </label>
             </div>
         </fieldset>

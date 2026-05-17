@@ -81,10 +81,10 @@ ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=scooter_d
 dotnet restore
 
 # Install frontend dependencies
-npm.cmd install
+npm install
 
 # Build frontend assets
-npm.cmd run build
+npm run build
 
 # Run the backend server
 dotnet run

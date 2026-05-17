@@ -11,6 +11,8 @@ public class BookingsController : Controller
     private readonly AppDbContext _dbContext;
     private const string CustomerCodeCookieName = "sb_customer_code";
     private const string ReconfirmPrefix = "[RECONFIRM]";
+
+    // Calculates financial data in the backend to prevent manipulation of prices from the client side. 
     private static readonly Dictionary<int, decimal> DurationPricing = new()
     {
         [1] = 20m,
@@ -475,6 +477,7 @@ public class BookingsController : Controller
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
+    // Decodes a base64 PNG signature string into a byte array, or returns null if the input is not a valid base64 PNG data URL.
     private static byte[]? DecodeSignaturePngOrNull(string? signature)
     {
         if (string.IsNullOrWhiteSpace(signature))
