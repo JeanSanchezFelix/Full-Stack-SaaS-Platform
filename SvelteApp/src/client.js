@@ -31,3 +31,7 @@ document.querySelectorAll('[data-svelte-component]').forEach((element) => {
   mount(element, { props: parseProps(element) });
   element.dataset.svelteMounted = 'true';
 });
+
+if (window.lucide?.createIcons) {
+  window.lucide.createIcons();
+}

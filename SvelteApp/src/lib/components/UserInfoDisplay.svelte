@@ -343,7 +343,7 @@
                   <td class="px-3 py-2 text-slate-700">{new Date(booking.requestedStart).toLocaleDateString("es-PR")}</td>
                   <td class="min-w-[100px] px-3 py-2 text-slate-700 whitespace-nowrap">{new Date(booking.requestedStart).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit"})}</td>                  
                   <td class="min-w-[100px] px-3 py-2 text-slate-700">{booking.requestedEnd ? new Date(booking.requestedEnd).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit" }) : "-"}</td>
-                  <td class="px-3 py-2 text-slate-700">{booking.requestedEnd ? Math.round((new Date(booking.requestedEnd) - new Date(booking.requestedStart)) / 3600000) : "-"} h</td>
+                  <td class="px-3 py-2 text-slate-700">{booking.requestedEnd ? Math.round((((new Date(booking.requestedEnd) - new Date(booking.requestedStart)) / 3600000) * 10)) / 10 : "-"} h</td>
                   <td class="px-3 py-2 text-slate-700">{booking.scooterQuantity}</td>
                   <td class="px-3 py-2 text-slate-700">{booking.ebikeQuantity}</td>
                   <td class="px-3 py-2 text-slate-700">${booking.estimatedTotal.toFixed(2)}</td>
@@ -434,12 +434,12 @@
   <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
     <div class="w-full max-w-lg rounded-md border border-t-4 border-[#267DA1] bg-white p-5 shadow-sm">
       <div class="mb-4 flex items-center justify-between">
-        <h3 class="text-base font-semibold text-slate-900">Comparte su experiencia</h3>
+        <h3 class="text-base font-semibold text-slate-900">Observaciones</h3>
         <button type="button" class="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100" onclick={closeReviewModal}>Cerrar</button>
       </div>
-      <p class="text-sm text-slate-600">En una escala del 1 al 10. ¿Cuánto le gustó la aventura o el servicio?</p>
+      <p class="text-sm text-slate-600">Campo para registrar notas administrativas o comentarios internos relevantes a la gestión de la reserva.</p>
 
-      <div class="mt-4">
+      <!-- <div class="mt-4">
         <label
           for="reviewRating"
           class="block text-sm font-semibold text-slate-800"
@@ -463,7 +463,7 @@
           <option value={9}>9 - Casi perfecta</option>
           <option value={10}>10 - Perfecta</option>
         </select>
-      </div>
+      </div> -->
 
       <div class="mt-4">
         <label
@@ -479,7 +479,7 @@
           rows="4"
           maxlength="1000"
           bind:value={reviewComment}
-          placeholder="Cuéntanos cómo fue tu experiencia..."
+          placeholder="Agregue aquí su observación..."
         ></textarea>
       </div>
 

@@ -42,14 +42,16 @@
 
     var exportCustomersButtonProps = JsonSerializer.Serialize(new
     {
-        label = "Exportar clientes (XLSX)",
+        label = "Exportar clientes",
         href = Url.Action("ExportCustomers", "Accounts"),
+        icon = "table-2",
         variant = "primary"
     });
     var exportBookingsButtonProps = JsonSerializer.Serialize(new
     {
-        label = "Exportar reservas (XLSX)",
+        label = "Exportar reservas",
         href = Url.Action("ExportBookings", "Accounts"),
+        icon = "table-2",
         variant = "primary"
     });
 
@@ -270,7 +272,6 @@
                         <th class="px-4 py-3 font-semibold" data-col-type="number">Scooters</th>
                         <th class="min-w-[100px] px-4 py-3 font-semibold" data-col-type="number">E-bikes</th>
                         <th class="px-4 py-3 font-semibold" data-col-type="currency">Total estimado</th>
-                        <th class="px-4 py-3 font-semibold" data-col-type="number">Puntaje</th>
                         <th class="px-4 py-3 font-semibold" data-col-type="text">Comentario</th>
                         @* <th class="px-4 py-3 font-semibold">Estado</th> *@
                         @* <th class="px-4 py-3 font-semibold">Nota admin</th> *@
@@ -303,11 +304,10 @@
                             <td class="px-4 py-3 text-slate-600">@booking.RequestedStart.ToString("d")</td>
                             <td class="px-4 py-3 text-slate-600">@booking.RequestedStart.ToString("HH:mm")</td>
                             <td class="px-4 py-3 text-slate-600">@(booking.RequestedEnd?.ToString("HH:mm") ?? "-")</td>
-                            <td class="px-4 py-3 text-slate-600">@(booking.RequestedEnd.HasValue ? Math.Round((booking.RequestedEnd.Value - booking.RequestedStart).TotalHours) : 0) h</td>
+                            <td class="px-4 py-3 text-slate-600">@(booking.RequestedEnd.HasValue ? Math.Round((booking.RequestedEnd.Value - booking.RequestedStart).TotalHours, 1, MidpointRounding.AwayFromZero) : 0) h</td>
                             <td class="px-4 py-3 text-slate-600">@booking.ScooterQuantity</td>
                             <td class="px-4 py-3 text-slate-600">@booking.EbikeQuantity</td>
                             <td class="px-4 py-3 text-slate-600">@(booking.EstimatedTotal.HasValue ? booking.EstimatedTotal.Value.ToString("C") : "-")</td>
-                            <td class="px-4 py-3 text-slate-600">@(booking.ReviewRating.HasValue ? $"{booking.ReviewRating}/10" : "-")</td>
                             <td class="px-4 py-3 text-slate-600">@(string.IsNullOrWhiteSpace(booking.ReviewComment) ? "-" : booking.ReviewComment)</td>
                             @* <td class="px-4 py-3 text-slate-600">@booking.Status</td> *@
                             @* <td class="px-4 py-3 text-slate-600">@booking.AdminNotes</td> *@
@@ -391,7 +391,6 @@
                             <th class="px-3 py-2 font-semibold">Scooters</th>
                             <th class="px-3 py-2 font-semibold">E-bikes</th>
                             <th class="px-3 py-2 font-semibold">Total estimado</th>
-                            <th class="px-3 py-2 font-semibold">Puntaje</th>
                             <th class="px-3 py-2 font-semibold">Comentario</th>
                             <th class="px-3 py-2 font-semibold"></th>
                         </tr>
@@ -620,14 +619,13 @@
                             const scooterQuantity = getBookingValue(booking, 'scooterQuantity', 'ScooterQuantity');
                             const ebikeQuantity = getBookingValue(booking, 'ebikeQuantity', 'EbikeQuantity');
                             const estimatedTotal = getBookingValue(booking, 'estimatedTotal', 'EstimatedTotal');
-                            const reviewRating = getBookingValue(booking, 'reviewRating', 'ReviewRating');
                             const reviewComment = getBookingValue(booking, 'reviewComment', 'ReviewComment');
                             const bookingId = getBookingValue(booking, 'id', 'Id');
                             const startDate = toValidDate(requestedStart);
                             const endDate = toValidDate(requestedEnd);
                             const endText = endDate ? formatTime(requestedEnd) : '-';
                             const durationText = startDate && endDate
-                                ? `${Math.round((endDate - startDate) / 3600000)} h`
+                                ? `${Math.round(((endDate - startDate) / 3600000) * 10) / 10} h`
                                 : '-';
                             const numericEstimatedTotal = estimatedTotal == null ? NaN : Number(estimatedTotal);
                             const totalText = Number.isFinite(numericEstimatedTotal)
@@ -644,7 +642,6 @@
                                 <td class="px-3 py-2 text-slate-700">${scooterQuantity ?? '-'}</td>
                                 <td class="px-3 py-2 text-slate-700">${ebikeQuantity ?? '-'}</td>
                                 <td class="px-3 py-2 text-slate-700">${totalText}</td>
-                                <td class="px-3 py-2 text-slate-700">${reviewRating ? `${reviewRating}/10` : '-'}</td>
                                 <td class="px-3 py-2 text-slate-700 max-w-[240px] truncate" title="${escapeHtml(reviewComment ?? '')}">${escapeHtml(reviewComment ?? '-')}</td>
                                 <td class="px-3 py-2">
                                     ${bookingId
@@ -760,8 +757,8 @@
                 const sortBtn = document.createElement('button');
                 sortBtn.type = 'button';
                 sortBtn.className = 'inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100';
-                sortBtn.innerHTML = '<i data-lucide="arrow-up-down" class="h-3.5 w-3.5"></i><span>Ordenar</span>';
-                const sortBtnLabel = sortBtn.querySelector('span');
+                sortBtn.innerHTML = '<i data-sort-icon data-lucide="arrow-up-down" class="h-3.5 w-3.5"></i><span>Ordenar</span>';
+                const sortBtnLabel = sortBtn.querySelector('span:last-child');
 
                 const filterBtn = document.createElement('button');
                 filterBtn.type = 'button';
@@ -791,7 +788,9 @@
                 filterPanel.innerHTML = `
                     <p class="mb-2 text-xs font-semibold text-slate-700">Filtrar por</p>
                     <select data-filter-column class="w-full rounded-md border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-900 font-semibold"></select>
-                    <input data-filter-value type="text" class="mt-2 w-full rounded-md border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-700" placeholder="Escribe un valor..." />
+                    <div class="relative mt-2">
+                        <input data-filter-value type="text" class="w-full rounded-md border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-700" placeholder="Escribe un valor..." />
+                    </div>
                     <div class="mt-2 flex gap-2">
                         <button type="button" data-filter-apply class="rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-white hover:bg-slate-800">Aplicar</button>
                         <button type="button" data-filter-clear class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">Limpiar filtro</button>
@@ -801,6 +800,7 @@
                 const sortSelect = sortPanel.querySelector('[data-sort-column]');
                 const filterSelect = filterPanel.querySelector('[data-filter-column]');
                 const filterInput = filterPanel.querySelector('[data-filter-value]');
+                const sortDirectionButtons = Array.from(sortPanel.querySelectorAll('[data-sort-dir]'));
 
                 headers.forEach((th, index) => {
                     const label = th.textContent?.trim() || `Columna ${index + 1}`;
@@ -812,8 +812,23 @@
                     const filterOption = document.createElement('option');
                     filterOption.value = String(index);
                     filterOption.textContent = label;
+                    filterOption.dataset.colType = th.getAttribute('data-col-type') || 'text';
                     filterSelect.appendChild(filterOption);
                 });
+
+                const syncFilterInputMode = () => {
+                    const selectedOption = filterSelect.options[filterSelect.selectedIndex];
+                    const selectedColType = selectedOption?.dataset?.colType || 'text';
+                    const useDateInput = selectedColType === 'date';
+
+                    if (useDateInput) {
+                        filterInput.type = 'date';
+                        filterInput.placeholder = '';
+                    } else {
+                        filterInput.type = 'text';
+                        filterInput.placeholder = 'Escribe un valor...';
+                    }
+                };
 
                 const hidePanels = () => {
                     sortPanel.classList.add('hidden');
@@ -836,6 +851,31 @@
                             ? `${headers[state.sort.columnIndex].textContent?.trim() || ''} (${state.sort.direction === 'asc' ? 'Asc' : 'Desc'})`
                             : 'Ordenar';
                     }
+                    const sortBtnIcon = sortBtn.querySelector('[data-sort-icon]');
+                    if (sortBtnIcon) {
+                        sortBtnIcon.setAttribute(
+                            'data-lucide',
+                            !sortActive ? 'arrow-up-down' : state.sort.direction === 'asc' ? 'arrow-up' : 'arrow-down'
+                        );
+                    }
+
+                    sortDirectionButtons.forEach((btn) => {
+                        const direction = btn.getAttribute('data-sort-dir');
+                        const isActive = sortActive && state.sort.direction === direction;
+                        const icon = direction === 'asc'
+                            ? '<i data-lucide="arrow-up" class="h-3.5 w-3.5"></i>'
+                            : '<i data-lucide="arrow-down" class="h-3.5 w-3.5"></i>';
+                        const label = direction === 'asc' ? 'Ascendente' : 'Descendente';
+
+                        btn.className = isActive
+                            ? 'inline-flex items-center gap-1 rounded-md border border-slate-900 bg-slate-900 px-2 py-1 text-xs font-semibold text-white'
+                            : 'inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100';
+                        btn.innerHTML = `${icon}<span>${label}</span>`;
+                    });
+
+                    if (window.lucide?.createIcons) {
+                        window.lucide.createIcons();
+                    }
                 };
 
                 sortBtn.addEventListener('click', () => {
@@ -854,8 +894,11 @@
                     hidePanels();
                     if (!isOpen) {
                         filterPanel.classList.remove('hidden');
+                        syncFilterInputMode();
                     }
                 });
+
+                filterSelect.addEventListener('change', syncFilterInputMode);
 
                 sortPanel.querySelectorAll('[data-sort-dir]').forEach((btn) => {
                     btn.addEventListener('click', () => {

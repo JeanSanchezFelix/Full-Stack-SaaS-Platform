@@ -13,12 +13,12 @@ public class BookingsController : Controller
     private const string ReconfirmPrefix = "[RECONFIRM]";
 
     // Calculates financial data in the backend to prevent manipulation of prices from the client side. 
-    private static readonly Dictionary<int, decimal> DurationPricing = new()
+    private static readonly Dictionary<double, decimal> DurationPricing = new()
     {
+        [0.5] = 15m,
         [1] = 20m,
-        [2] = 30m,
-        [3] = 35m,
-        [6] = 45m
+        [2] = 35m,
+        [3] = 40m
     };
 
     public BookingsController(AppDbContext dbContext)
@@ -153,7 +153,7 @@ public class BookingsController : Controller
         }
 
         var durationHours = model.RequestedEnd.HasValue
-            ? (int)Math.Round((model.RequestedEnd.Value - model.RequestedStart).TotalHours)
+            ? Math.Round((model.RequestedEnd.Value - model.RequestedStart).TotalHours, 1, MidpointRounding.AwayFromZero)
             : 0;
 
         if (model.RequestedEnd.HasValue && model.RequestedEnd.Value <= model.RequestedStart)
@@ -163,7 +163,7 @@ public class BookingsController : Controller
 
         if (!DurationPricing.ContainsKey(durationHours))
         {
-            ModelState.AddModelError(nameof(model.RequestedEnd), "La duracion debe ser 1, 2, 3 o 6 horas.");
+            ModelState.AddModelError(nameof(model.RequestedEnd), "La duracion debe ser 0.5, 1, 2 o 3 horas.");
         }
 
         if (!model.LiabilityWaiverSigned)

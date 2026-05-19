@@ -2,25 +2,102 @@
     ViewData["Title"] = "Home";
 }
 
-<section class="rounded-md bg-gradient-to-br from-indigo-500 to-violet-700 px-6 py-16 text-center text-white shadow-sm sm:px-10">
-    <h1 class="text-4xl font-bold leading-tight sm:text-5xl">Welcome to SvelteHybridMVC</h1>
-    <p class="mx-auto mt-4 max-w-2xl text-lg text-white/90">
-        A hybrid system that combines the structure of ASP.NET MVC with SvelteKit interactivity.
-    </p>
+<section class="hero-gradient-motion relative overflow-hidden rounded-md border border-slate-200 bg-gradient-to-br from-[#0f172a] via-[#0c4a6e] to-[#0ea5e9] px-6 py-16 text-white shadow-sm sm:px-10">
+    <div class="pointer-events-none absolute -left-24 top-[-70px] h-56 w-56 rounded-full  blur-3xl"></div>
+    <div class="pointer-events-none absolute -right-20 bottom-[-80px] h-56 w-56 rounded-full bg-[#22d3ee]/30 blur-3xl"></div>
 
-    <div class="mt-10 grid gap-6 md:grid-cols-3">
-        <article class="rounded-md border border-white/20 bg-white/15 p-6 text-left shadow-sm backdrop-blur">
-            <h3 class="text-xl font-semibold text-white">MVC First</h3>
-            <p class="mt-3 text-sm leading-6 text-white/90">Razor views control the pages while Svelte components add focused interactivity.</p>
-        </article>
-        <article class="rounded-md border border-white/20 bg-white/15 p-6 text-left shadow-sm backdrop-blur">
-            <h3 class="text-xl font-semibold text-white">Fast SSR</h3>
-            <p class="mt-3 text-sm leading-6 text-white/90">Server-side rendering with selective hydration for interactive areas.</p>
-        </article>
-        <article class="rounded-md border border-white/20 bg-white/15 p-6 text-left shadow-sm backdrop-blur">
-            <h3 class="text-xl font-semibold text-white">Live Updates</h3>
-            <p class="mt-3 text-sm leading-6 text-white/90">Hot reload support for both C# and Svelte during development.</p>
-        </article>
+    <div class="relative grid gap-10 lg:grid-cols-2 lg:items-center">
+        <div>
+            <p class="inline-flex rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/90">
+                Cataño, Puerto Rico
+            </p>
+            <h1 class="mt-5 text-4xl font-extrabold leading-tight sm:text-5xl">
+                Explora la Bahía sobre ruedas
+            </h1>
+            <p class="mt-4 max-w-2xl text-base leading-7 text-white/90 sm:text-lg">
+                Reserva scooters y e-bikes en minutos, elige la duración perfecta para tu aventura
+                y disfruta una experiencia rápida, segura y memorable.
+            </p>
+
+            <div class="mt-8 flex flex-wrap items-center gap-3">
+                <a asp-controller="Bookings" asp-action="Create"
+                   class="inline-flex items-center rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
+                    Reservar ahora
+                </a>
+                <a asp-controller="Customers" asp-action="Create"
+                   class="inline-flex items-center rounded-md border border-white/40 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
+                    Crear perfil
+                </a>
+            </div>
+        </div>
+
+        <div class="rounded-md border border-white/20 bg-white/10 p-6 backdrop-blur">
+            <p class="text-sm font-semibold uppercase tracking-wide text-cyan-100">Tarifas de viaje</p>
+            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                <div class="rounded-md bg-white/10 px-4 py-3">
+                    <p class="text-white/80">30 minutos</p>
+                    <p class="mt-1 text-xl font-bold">$15</p>
+                </div>
+                <div class="rounded-md bg-white/10 px-4 py-3">
+                    <p class="text-white/80">1 hora</p>
+                    <p class="mt-1 text-xl font-bold">$20</p>
+                </div>
+                <div class="rounded-md bg-white/10 px-4 py-3">
+                    <p class="text-white/80">2 horas</p>
+                    <p class="mt-1 text-xl font-bold">$35</p>
+                </div>
+                <div class="rounded-md bg-white/10 px-4 py-3">
+                    <p class="text-white/80">3 horas</p>
+                    <p class="mt-1 text-xl font-bold">$40</p>
+                </div>
+            </div>
+        </div>
     </div>
-
 </section>
+
+<section class="mt-8 grid gap-4 md:grid-cols-3">
+    <article class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900">Reserva sin complicaciones</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">
+            Elige fecha, hora y cantidad en una sola pantalla con cálculo automático del total estimado.
+        </p>
+    </article>
+    <article class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900">Perfil de cliente</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">
+            Guarda tu información para futuras reservas y revisa tu historial cuando quieras.
+        </p>
+    </article>
+    <article class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900">Atención local</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">
+            Equipo en Cataño listo para ayudarte con rutas recomendadas y detalles del alquiler.
+        </p>
+    </article>
+</section>
+
+<style>
+
+    @@keyframes heroPulse {
+        0%, 100% { opacity: 0.20; }
+        50% { opacity: 0.35; }
+    }
+
+    .hero-gradient-motion::before {
+        content: "";
+        position: absolute;
+        inset: -35%;
+        background: conic-gradient(
+            from 0deg,
+            rgba(56, 189, 248, 0.18),
+            rgba(14, 165, 233, 0.12),
+            rgba(22, 200, 249, 0.14),
+            rgba(56, 189, 248, 0.18)
+        );
+        opacity: 0.32;
+        animation:
+            heroPulse 9s ease-in-out infinite;
+        transform-origin: 50% 50%;
+        pointer-events: none;
+    }
+</style>

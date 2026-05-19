@@ -1,0 +1,10 @@
+.git
+.gitignore
+.vscode
+.vs
+bin
+obj
+node_modules
+wwwroot/_svelte
+wwwroot/css/site.css
+*.log

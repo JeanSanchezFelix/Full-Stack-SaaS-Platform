@@ -4,6 +4,7 @@
     href = "",
     type = "button",
     variant = "primary",
+    icon = "",
     block = false,
     extraClass = "",
   } = $props();
@@ -22,10 +23,16 @@
 
 {#if href}
   <a href={href} class={classes}>
+    {#if icon}
+      <i data-lucide={icon} class="mr-2 inline-block h-4 w-4 align-[-2px]" aria-hidden="true"></i>
+    {/if}
     {label}
   </a>
 {:else}
   <button type={type} class={classes}>
+    {#if icon}
+      <i data-lucide={icon} class="mr-2 inline-block h-4 w-4 align-[-2px]" aria-hidden="true"></i>
+    {/if}
     {label}
   </button>
 {/if}

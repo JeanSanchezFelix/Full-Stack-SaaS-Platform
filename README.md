@@ -95,6 +95,33 @@ Then open:
 http://localhost:5000
 ```
 
+## Run with Docker Compose
+
+1. Copy `.env.docker.example` to `.env`.
+2. Set `POSTGRES_PASSWORD` in `.env`.
+3. Start everything:
+
+```bash
+docker compose up -d --build
+```
+
+4. Open:
+
+```text
+http://localhost:8080
+```
+
+Notes:
+* The app container gets `ConnectionStrings__DefaultConnection` automatically from Compose and points to the `db` service.
+* `./schema` is mounted to `/docker-entrypoint-initdb.d` so SQL scripts there run only on first DB initialization.
+
+### Coolify
+
+* Use **Docker Compose** as the deployment type.
+* Point it to this repo and `docker-compose.yml`.
+* Set environment variables from `.env.docker.example` in Coolify (`POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `APP_PORT`).
+* Expose port `8080` for the `web` service.
+
 ## Technologies
 * ASP.NET Core 10
 * MVC + Razor Views

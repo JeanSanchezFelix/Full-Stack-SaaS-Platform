@@ -10,11 +10,11 @@
     var startTimeValue = Model.RequestedStart.ToString("HH:mm");
     var endDateValue = Model.RequestedEnd?.ToString("yyyy-MM-dd") ?? string.Empty;
     var endTimeValue = Model.RequestedEnd?.ToString("HH:mm") ?? string.Empty;
-    var durationHours = 1;
+    var durationHours = 1d;
     if (Model.RequestedEnd.HasValue)
     {
-        var hours = (int)Math.Round((Model.RequestedEnd.Value - Model.RequestedStart).TotalHours);
-        if (hours == 1 || hours == 2 || hours == 3 || hours == 6)
+        var hours = Math.Round((Model.RequestedEnd.Value - Model.RequestedStart).TotalHours, 1, MidpointRounding.AwayFromZero);
+        if (hours == 0.5 || hours == 1 || hours == 2 || hours == 3)
         {
             durationHours = hours;
         }
@@ -70,13 +70,13 @@
 
             <div class="rounded-md border border-amber-200 bg-amber-50 p-4">
                 <label for="duration-hours" class="block text-sm font-semibold text-amber-900">Duración</label>
-                <p class="mt-1 text-xs text-amber-700">Solo permitimos 1, 2, 3 ó 6 horas</p>
+                <p class="mt-1 text-xs text-amber-700">Solo permitimos 0.5, 1, 2 ó 3 horas</p>
                 <select id="duration-hours"
                         class="mt-3 w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    <option value="0.5" selected="@(durationHours == 0.5)">30 min. - $15</option>
                     <option value="1" selected="@(durationHours == 1)">1 hora - $20</option>
-                    <option value="2" selected="@(durationHours == 2)">2 horas - $30</option>
-                    <option value="3" selected="@(durationHours == 3)">3 horas - $35</option>
-                    <option value="6" selected="@(durationHours == 6)">6 horas - $45</option>
+                    <option value="2" selected="@(durationHours == 2)">2 horas - $35</option>
+                    <option value="3" selected="@(durationHours == 3)">3 horas - $40</option>
                 </select>
             </div>
 
@@ -251,12 +251,12 @@
                     const waiverCheckbox = document.getElementById('waiver-signed-checkbox');
                     const signatureInput = document.getElementById('electronic-signature-input');
                     const signatureHint = document.getElementById('signature-lock-hint');
-                    const priceMap = { 1: 20, 2: 30, 3: 35, 6: 45 };
+                    const priceMap = { 0.5: 15, 1: 20, 2: 35, 3: 40 };
                     const licenseValue = (form.querySelector('input[name="LicenseNumber"]')?.value || '').trim().toLowerCase();
                     const draftStorageKey = `booking-draft:${licenseValue || 'anonymous'}`;
                     const shouldClearDraft = @((bookingCreated is not null).ToString().ToLowerInvariant());
 
-                    const allowedDurations = [1, 2, 3, 6];
+                    const allowedDurations = [0.5, 1, 2, 3];
 
                     const saveDraft = () => {
                         try {
@@ -389,7 +389,7 @@
                             return;
                         }
 
-                        let duration = Math.round((end.getTime() - start.getTime()) / 3600000);
+                        let duration = (end.getTime() - start.getTime()) / 3600000;
                         if (duration <= 0) {
                             duration += 24;
                         }
